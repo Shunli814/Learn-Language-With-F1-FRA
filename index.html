@@ -44,7 +44,25 @@ body{padding-bottom:env(safe-area-inset-bottom,0px)}
 select{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:6px 9px;font-size:13px;cursor:pointer}
 select:focus{outline:none;border-color:var(--hot)}
 
-.tabs{display:flex;gap:6px;margin-top:9px}
+.tabs{display:flex;gap:6px}
+.ctrls{display:flex;gap:7px;margin-top:8px;align-items:center}
+.ctrls select{flex:0 1 auto;min-width:0}
+/* 手机上抬头必须让位给题目，所以砍掉副标题、缩小间距 */
+@media(max-width:480px){
+  .hwrap{padding:6px 11px}
+  .logo{font-size:15px;letter-spacing:.08em}
+  .logo small{display:none}
+  .hrow{gap:6px}
+  .tabs button{padding:4px 12px;font-size:13px}
+  .ctrls{margin-top:6px;gap:6px}
+  .ctrls select,.ctrls .btn{padding:5px 8px;font-size:12px}
+  .checker{height:3px;background-size:8px 8px;background-position:0 0,4px 4px}
+  main{padding:11px 11px 36px}
+  .card{padding:17px 14px;min-height:0}
+  .word{margin:1px 0 4px}
+  blockquote{margin:10px 0 2px;padding:9px 12px}
+  .fb{margin-top:11px;padding-top:11px}
+}
 .tabs button{flex:0 0 auto;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:14px;cursor:pointer;transition:.15s}
 .tabs button.on{background:var(--t);color:#0b0c0e;border-color:var(--t);font-weight:700}
 
@@ -83,6 +101,10 @@ input.ok{border-color:var(--ok)}input.bad{border-color:var(--bad)}
 .btn.sm{padding:7px 12px;font-size:13px}
 
 .fb{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+/* 反馈内容在小屏上可能很长，把「下一题」吸在屏幕底部，任何尺寸都够得着 */
+.fb .row:last-child{position:sticky;bottom:0;margin:6px 0 0;padding:10px 0 calc(2px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,var(--card) 55%,transparent);z-index:2}
+.fb .row:last-child .btn{width:100%;text-align:center}
 .verdict{font-weight:700;font-size:17px}
 .verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}
 .diff b{color:var(--bad);text-decoration:underline;text-decoration-style:wavy}
@@ -122,11 +144,13 @@ footer{max-width:720px;margin:0 auto;padding:0 14px 34px;color:var(--t3);font-si
   <div class="hrow">
     <div class="logo">GRI<span class="k">LL</span>E<small>FRANÇAIS · TCF · SPORT AUTO</small></div>
     <div class="spacer"></div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="ctrls">
     <select id="lvl" title="等级"></select>
     <select id="qtype" title="题型"></select>
     <button id="autosay" class="btn sm" title="每题自动念出单词"></button>
   </div>
-  <div class="tabs" id="tabs"></div>
  </div>
  <div class="checker"></div>
 </header>
@@ -562,12 +586,24 @@ document.addEventListener("click", e => {
 }, true);
 const sentOf = s => s.split(" / ")[0];
 
+// 回到顶部。每出一道新题都要做，否则手机上答完题得一路往上滑。
+function toTop(){
+  try{ window.scrollTo({top:0, behavior:"instant"}); }
+  catch(e){ window.scrollTo(0, 0); }
+}
 function fb(host, good, html){
   host.insertAdjacentHTML("beforeend",
     `<div class="fb"><div class="verdict ${good?'ok':'bad'}">${good?'✅ 对了':'❌ 不对'}</div>${html}
      <div class="row"><button class="btn main" id="nx">下一题 →</button></div></div>`);
   $("nx").onclick = next;
-  $("nx").focus();
+  // 按钮已吸底，这里只要保证「对/不对」的判定露出来即可
+  const v = host.querySelector(".fb .verdict");
+  if(v){
+    const r = v.getBoundingClientRect();
+    if(r.top < 0 || r.bottom > window.innerHeight)
+      v.scrollIntoView({block:"center", behavior:"smooth"});
+  }
+  $("nx").focus({preventScroll:true});
 }
 function exBlock(w){
   const f = fill(w);
@@ -578,6 +614,7 @@ function exBlock(w){
 
 function next(){
   if(tab !== "practice") return;
+  toTop();
   if(qmode !== "mix"){ lastQ = qmode; return Q[qmode].fn(); }
   // 混合：先抽词，再按词性挑一种合适的题型，避免和上一题重复
   const w = pick(pool());
@@ -1008,7 +1045,10 @@ $("doimport").onclick = () => {
 document.addEventListener("keydown", e => { if(e.key === "Enter" && $("nx")) $("nx").click(); });
 
 function drawAutoSay(){
-  $("autosay").textContent = autoSay ? "🔊 自动发音 开" : "🔇 自动发音 关";
+  const narrow = window.innerWidth <= 480;
+  $("autosay").textContent = autoSay
+    ? (narrow ? "🔊 发音" : "🔊 自动发音 开")
+    : (narrow ? "🔇 发音" : "🔇 自动发音 关");
   $("autosay").style.borderColor = autoSay ? "var(--hot)" : "var(--line)";
 }
 $("autosay").onclick = () => {
