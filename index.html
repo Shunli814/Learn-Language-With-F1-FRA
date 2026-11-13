@@ -147,6 +147,17 @@ footer{max-width:720px;margin:0 auto;padding:0 14px 34px;color:var(--t3);font-si
   <div class="row"><button class="btn sm" id="reset">清空学习进度</button></div>
  </details>
 
+ <details id="devicebox">
+  <summary>📱 手机：防清除保护 / 图标角标</summary>
+  <div id="storagebox" style="margin:10px 0"></div>
+  <p class="sub">角标会把「待复习词数」显示在主屏幕图标上，像微信的小红点。
+     需要允许通知，而且必须是从主屏幕图标打开才有效。</p>
+  <div class="row"><button class="btn sm" id="badgebtn"></button></div>
+  <div class="sub" id="badgemsg" style="margin-top:8px"></div>
+  <p class="sub" style="margin-top:12px">说明：iOS 不允许网页在后台刷新，所以角标只在你打开应用时更新。
+     想要「每天早上自动变成当天的数量」，需要服务器推送，现在还没有。</p>
+ </details>
+
  <details id="syncbox">
   <summary>💾 备份进度：导出 / 导入</summary>
   <p class="sub">进度只存在这台设备的浏览器里，清缓存或换设备就会没。
@@ -265,7 +276,7 @@ function grade(w, good){
   if(good){ p.box = Math.min(6, p.box + 1); session.right++; }
   else    { p.box = 0; p.err++; session.wrong++; }
   p.due = Date.now() + BOX_DAYS[p.box] * 86400000;
-  prog[k] = p; saveAll(); drawBar();
+  prog[k] = p; saveAll(); drawBar(); updateBadge();
 }
 
 function diff(got, want){
@@ -351,6 +362,84 @@ function pronBlock(w){
     '<div class="sub" style="color:var(--bad)">这个环境没有语音功能，只能看拼读提示。</div>';
   return `<div class="row" style="margin-top:12px">${sayBtn(bare(w.fr), "再听一次")}</div>${warn}` +
     (hints.length ? `<div class="sub" style="margin-top:8px;line-height:1.75">读音提示：<br>· ${hints.join("<br>· ")}</div>` : "");
+}
+
+
+/* ───────── 持久化存储与图标角标 ───────── */
+let badgeOn = LS.get("g_badge", false);
+let storageState = {persisted:null, used:null, quota:null};
+
+// 向浏览器申请「别清掉我的数据」。Safari 17 之后支持，能明显降低进度被回收的概率。
+async function initStorage(){
+  try{
+    if(navigator.storage){
+      if(navigator.storage.persisted) storageState.persisted = await navigator.storage.persisted();
+      if(storageState.persisted === false && navigator.storage.persist)
+        storageState.persisted = await navigator.storage.persist();
+      if(navigator.storage.estimate){
+        const e = await navigator.storage.estimate();
+        storageState.used = e.usage; storageState.quota = e.quota;
+      }
+    }
+  }catch(e){}
+  drawStorage();
+}
+
+// 待复习 = 已经学过（box≥1）且到了该复习的时间
+function dueCount(){
+  const now = Date.now();
+  return WORDS.filter(w => { const p = prog[w.id]; return p && p.box >= 1 && p.due <= now; }).length;
+}
+function updateBadge(){
+  if(!badgeOn) return;
+  try{
+    const n = dueCount();
+    if(navigator.setAppBadge){
+      if(n > 0) navigator.setAppBadge(n); else navigator.clearAppBadge();
+    }
+  }catch(e){}
+}
+async function enableBadge(){
+  // 先确认角标本身可用，再去要通知权限。顺序反了会白白弹一次权限请求。
+  if(typeof navigator.setAppBadge !== "function")
+    return {ok:false, why:"这个环境不支持角标。角标只在「加到主屏幕」之后从图标打开才有，浏览器标签页里没有。"};
+  if(!("Notification" in window)) return {ok:false, why:"这个环境不支持通知，角标用不了"};
+  let perm = Notification.permission;
+  if(perm === "default"){
+    try{ perm = await Notification.requestPermission(); }catch(e){ return {ok:false, why:"授权请求失败"}; }
+  }
+  if(perm === "denied") return {ok:false, why:"通知权限被拒绝了。要在系统设置里找到这个应用重新打开通知。"};
+  if(perm !== "granted") return {ok:false, why:"没有拿到通知授权"};
+  badgeOn = true; LS.set("g_badge", true); updateBadge();
+  return {ok:true};
+}
+function disableBadge(){
+  badgeOn = false; LS.set("g_badge", false);
+  try{ navigator.clearAppBadge && navigator.clearAppBadge(); }catch(e){}
+}
+const fmtBytes = b => b == null ? "—" :
+  b > 1048576 ? (b/1048576).toFixed(1) + " MB" : (b/1024).toFixed(0) + " KB";
+
+function drawStorage(){
+  const el = $("storagebox"); if(!el) return;
+  const p = storageState.persisted;
+  const tag = p === true  ? '<b style="color:var(--ok)">已开启</b>'
+            : p === false ? '<b style="color:var(--t2)">未开启（系统没批准）</b>'
+            :               '<b style="color:var(--t2)">这个环境不支持</b>';
+  const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+                     window.navigator.standalone === true;
+  el.innerHTML =
+    `<div class="row" style="margin:0"><span class="sub" style="flex:1">防清除保护：${tag}</span></div>` +
+    `<div class="sub">已用空间 ${fmtBytes(storageState.used)}` +
+      (storageState.quota ? ` / 可用 ${fmtBytes(storageState.quota)}` : "") + `</div>` +
+    `<div class="sub">打开方式：${standalone ? "<b>主屏幕应用</b>（角标可用）" : "浏览器标签页（角标不可用）"}</div>`;
+}
+function drawBadgeBtn(){
+  const b = $("badgebtn"); if(!b) return;
+  b.textContent = badgeOn ? "🔴 图标角标 开" : "⚪️ 图标角标 关";
+  b.style.borderColor = badgeOn ? "var(--hot)" : "var(--line)";
+  const n = $("badgemsg");
+  if(n) n.textContent = badgeOn ? `当前待复习 ${dueCount()} 个词，关掉应用时会显示在图标上。` : "";
 }
 
 /* ───────── 变位生成 ───────── */
@@ -927,8 +1016,20 @@ $("autosay").onclick = () => {
   // 手机上第一次必须由点击触发，否则后面都不会响
   if(autoSay && !speak("bonjour")) $("autosay").textContent = "🔇 此环境无语音";
 };
-drawAutoSay();
+$("badgebtn").onclick = async () => {
+  if(badgeOn){ disableBadge(); drawBadgeBtn(); return; }
+  const r = await enableBadge();
+  drawBadgeBtn();
+  if(!r.ok) $("badgemsg").textContent = r.why;
+};
+// 关掉或切走应用时把角标刷到最新
+["pagehide","visibilitychange"].forEach(ev =>
+  document.addEventListener(ev, () => { if(document.visibilityState !== "visible") updateBadge(); }));
+
+drawAutoSay(); drawBadgeBtn(); drawStorage();
 drawSelects(); drawTabs(); drawBlock(); drawBar(); next();
+initStorage();        // 异步，拿到结果后会自己重绘
+updateBadge();
 </script>
 </body>
 </html>
