@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0c0e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GRILLE">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>GRILLE · 法语单词</title>
+<style>
+:root{
+  --bg:#0b0c0e; --bg2:#121419; --card:#171a20; --line:#272b34;
+  --t:#eceef2; --t2:#8b94a3; --t3:#5d6673;
+  --hot:#e03131;            /* 路肩红，中性赛车色，不属于任何车队 */
+  --ok:#2fbf71; --bad:#e5484d;
+  --m:#5aa9ff; --f:#ff7ec8;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font:16px/1.55 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+button,input,select{font:inherit;color:inherit}
+
+/* 方格旗纹，纯 CSS，不使用任何标志 */
+.checker{height:6px;background-image:
+  linear-gradient(45deg,#2a2f38 25%,transparent 25%,transparent 75%,#2a2f38 75%),
+  linear-gradient(45deg,#2a2f38 25%,transparent 25%,transparent 75%,#2a2f38 75%);
+  background-size:12px 12px;background-position:0 0,6px 6px;background-color:#0b0c0e}
+
+header{position:sticky;top:0;z-index:10;background:var(--bg2);border-bottom:1px solid var(--line);
+       padding-top:env(safe-area-inset-top,0px)}
+body{padding-bottom:env(safe-area-inset-bottom,0px)}
+.hwrap{max-width:720px;margin:0 auto;padding:10px 14px}
+.hrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:19px;letter-spacing:.14em}
+.logo .k{color:var(--hot)}
+.logo small{display:block;font-size:10px;color:var(--t3);font-weight:500;letter-spacing:.16em;margin-top:1px}
+.spacer{flex:1}
+select{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:6px 9px;font-size:13px;cursor:pointer}
+select:focus{outline:none;border-color:var(--hot)}
+
+.tabs{display:flex;gap:6px;margin-top:9px}
+.tabs button{flex:0 0 auto;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:14px;cursor:pointer;transition:.15s}
+.tabs button.on{background:var(--t);color:#0b0c0e;border-color:var(--t);font-weight:700}
+
+main{max-width:720px;margin:0 auto;padding:16px 14px 50px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 20px;min-height:250px;display:flex;flex-direction:column;justify-content:center}
+.hint{color:var(--t2);font-size:13px;margin-bottom:4px}
+.word{font-size:clamp(26px,7vw,36px);font-weight:700;line-height:1.2;margin:2px 0 6px;word-break:break-word}
+.gloss{font-size:17px}
+.sub{color:var(--t2);font-size:14px;margin-top:4px}
+.sent{margin:2px 0;font-size:18px;line-height:1.65}
+.sentzh{color:var(--t2);font-size:14px;margin-top:3px}
+blockquote{margin:13px 0 2px;padding:10px 14px;border-left:3px solid var(--hot);background:#ffffff07;border-radius:0 8px 8px 0}
+.who{color:var(--hot);font-weight:600}
+
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:#ffffff12;color:var(--t2);white-space:nowrap}
+.pill.lv{background:var(--hot);color:#fff}
+.pill.warn{background:#4a2410;color:#ffb07a}
+.m{color:var(--m)}.f{color:var(--f)}
+
+.opts{display:grid;gap:9px;margin-top:15px}
+.opt{background:var(--bg2);border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;text-align:left;cursor:pointer;transition:.12s;font-size:16px}
+.opt:hover:not(:disabled){border-color:var(--hot)}
+.opt:disabled{cursor:default;opacity:.9}
+.opt.ok{border-color:var(--ok);background:#0e2e1f}
+.opt.bad{border-color:var(--bad);background:#351416}
+.two{grid-template-columns:1fr 1fr}
+
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:13px}
+input[type=text]{flex:1;min-width:150px;background:var(--bg2);border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;font-size:19px;outline:none}
+input[type=text]:focus{border-color:var(--hot)}
+input.ok{border-color:var(--ok)}input.bad{border-color:var(--bad)}
+.btn{background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:11px 17px;cursor:pointer;font-size:15px;transition:.12s}
+.btn:hover{border-color:var(--hot)}
+.btn.main{background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
+.btn.sm{padding:7px 12px;font-size:13px}
+
+.fb{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.verdict{font-weight:700;font-size:17px}
+.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}
+.diff b{color:var(--bad);text-decoration:underline;text-decoration-style:wavy}
+
+table.conj{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+table.conj td{padding:4px 6px;border-bottom:1px solid var(--line)}
+table.conj td:first-child{color:var(--t2);width:34%}
+
+.bar{display:flex;gap:13px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--t2)}
+.bar b{color:var(--t)}
+.matchwrap{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+
+details{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+summary{cursor:pointer;font-size:14px;color:var(--t2)}
+.tags{margin:10px 0}
+.tag{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;margin:0 6px 6px 0}
+.tag a{color:var(--bad);text-decoration:none;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--hot)}
+.chip.off{opacity:.4;text-decoration:line-through}
+
+.news{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px;margin-bottom:11px}
+.news .q{font-size:19px;line-height:1.6}
+.news .zh{color:var(--t2);font-size:14px;margin-top:7px}
+.news .meta{margin-top:11px;font-size:12px;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.news a{color:var(--hot);text-decoration:none}
+.news a:hover{text-decoration:underline}
+footer{max-width:720px;margin:0 auto;padding:0 14px 34px;color:var(--t3);font-size:12px;line-height:1.75}
+@media(max-width:420px){.matchwrap{gap:6px}.opt{padding:11px 13px}}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="hwrap">
+  <div class="hrow">
+    <div class="logo">GRI<span class="k">LL</span>E<small>FRANÇAIS · TCF · SPORT AUTO</small></div>
+    <div class="spacer"></div>
+    <select id="lvl" title="等级"></select>
+    <select id="qtype" title="题型"></select>
+    <button id="autosay" class="btn sm" title="每题自动念出单词"></button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+ </div>
+ <div class="checker"></div>
+</header>
+
+<main>
+ <div id="stage"></div>
+ <div class="bar" id="bar"></div>
+
+ <details id="setbox">
+  <summary>⚙️ 设置：屏蔽车手 / 学习进度</summary>
+  <p class="sub">被屏蔽的人不会出现在例句和新闻里。例句会自动换成别的车手，不会因此少掉单词。</p>
+  <div class="chips" id="chips"></div>
+  <div class="tags" id="blist" style="margin-top:12px"></div>
+  <div class="row">
+    <input type="text" id="newblock" placeholder="手动添加（车手或车队）" style="font-size:15px">
+    <button class="btn sm" id="addblock">添加</button>
+  </div>
+  <div class="row"><button class="btn sm" id="reset">清空学习进度</button></div>
+ </details>
+
+ <details id="syncbox">
+  <summary>💾 备份进度：导出 / 导入</summary>
+  <p class="sub">进度只存在这台设备的浏览器里，清缓存或换设备就会没。
+     导出一串码自己存着，之后粘回来就能接着练。</p>
+  <div class="row">
+    <button class="btn sm" id="doexport">导出我的进度</button>
+    <button class="btn sm" id="docopy">复制</button>
+    <button class="btn sm" id="doimport">导入这串码</button>
+  </div>
+  <textarea id="synccode" rows="4" placeholder="点「导出」生成，或把之前存的码粘贴到这里再点「导入」"
+    style="width:100%;margin-top:10px;background:var(--bg2);border:1.5px solid var(--line);
+           border-radius:11px;padding:11px 13px;font-size:13px;color:var(--t);
+           font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical;outline:none"></textarea>
+  <div class="sub" id="syncmsg" style="margin-top:8px"></div>
+ </details>
+</main>
+
+<footer>
+ 通用 TCF 词汇（A1–C1），例句覆盖 2026 赛季全部 11 支车队。<br>
+ 拼写与变位题需完全正确，<b>重音符号算在内</b>（é 和 è 不同）。<br>
+ 答错的词很快再出现，答对后间隔逐渐拉长。进度保存在本机浏览器。<br>
+ 「真实新闻」里是法语媒体原句，每条只摘一句并附原文链接。
+</footer>
+
+<script>
+const PAYLOAD = {"vocab": [{"t": "noun", "fr": "le monde", "en": "world", "zh": "世界", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le monde"}, {"t": "noun", "fr": "le temps", "en": "time; weather", "zh": "时间；天气", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le temps"}, {"t": "noun", "fr": "l'année", "en": "year", "zh": "年", "g": "f", "lvl": "A1", "trap": false, "id": "noun:l'année"}, {"t": "noun", "fr": "le travail", "en": "work", "zh": "工作", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le travail"}, {"t": "noun", "fr": "la main", "en": "hand", "zh": "手", "g": "f", "lvl": "A1", "trap": true, "id": "noun:la main"}, {"t": "noun", "fr": "l'eau", "en": "water", "zh": "水", "g": "f", "lvl": "A1", "trap": true, "id": "noun:l'eau"}, {"t": "noun", "fr": "le pays", "en": "country", "zh": "国家", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le pays"}, {"t": "noun", "fr": "la ville", "en": "city", "zh": "城市", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la ville"}, {"t": "noun", "fr": "le jour", "en": "day", "zh": "日子", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le jour"}, {"t": "noun", "fr": "la nuit", "en": "night", "zh": "夜晚", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la nuit"}, {"t": "noun", "fr": "l'heure", "en": "hour; time", "zh": "小时；钟点", "g": "f", "lvl": "A1", "trap": false, "id": "noun:l'heure"}, {"t": "noun", "fr": "la fin", "en": "end", "zh": "结尾，末尾", "g": "f", "lvl": "A1", "trap": true, "id": "noun:la fin"}, {"t": "noun", "fr": "le début", "en": "beginning", "zh": "开头，起初", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le début"}, {"t": "noun", "fr": "la place", "en": "place; position", "zh": "位置；名次", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la place"}, {"t": "noun", "fr": "le prix", "en": "price; prize", "zh": "价格；奖", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le prix"}, {"t": "noun", "fr": "la question", "en": "question", "zh": "问题（提问）", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la question"}, {"t": "noun", "fr": "la réponse", "en": "answer", "zh": "回答，答案", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la réponse"}, {"t": "noun", "fr": "le départ", "en": "start", "zh": "出发，发车", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le départ"}, {"t": "noun", "fr": "l'arrivée", "en": "arrival; finish", "zh": "到达；终点", "g": "f", "lvl": "A1", "trap": false, "id": "noun:l'arrivée"}, {"t": "noun", "fr": "la semaine", "en": "week", "zh": "星期", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la semaine"}, {"t": "noun", "fr": "le mois", "en": "month", "zh": "月", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le mois"}, {"t": "noun", "fr": "le choix", "en": "choice", "zh": "选择，抉择", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le choix"}, {"t": "noun", "fr": "la raison", "en": "reason", "zh": "原因", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la raison"}, {"t": "noun", "fr": "le problème", "en": "problem", "zh": "问题（难题）", "g": "m", "lvl": "A1", "trap": true, "id": "noun:le problème"}, {"t": "noun", "fr": "le système", "en": "system", "zh": "系统", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le système"}, {"t": "noun", "fr": "le programme", "en": "programme; schedule", "zh": "计划；日程", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le programme"}, {"t": "noun", "fr": "le groupe", "en": "group", "zh": "群；组", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le groupe"}, {"t": "noun", "fr": "le musée", "en": "museum", "zh": "博物馆", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le musée"}, {"t": "noun", "fr": "la page", "en": "page", "zh": "页", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la page"}, {"t": "noun", "fr": "le silence", "en": "silence", "zh": "沉默", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le silence"}, {"t": "noun", "fr": "le courage", "en": "courage", "zh": "勇气", "g": "m", "lvl": "A2", "trap": true, "id": "noun:le courage"}, {"t": "noun", "fr": "la peur", "en": "fear", "zh": "害怕，恐惧", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la peur"}, {"t": "noun", "fr": "la voix", "en": "voice", "zh": "声音", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la voix"}, {"t": "noun", "fr": "le bruit", "en": "noise", "zh": "噪音", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le bruit"}, {"t": "noun", "fr": "la vitesse", "en": "speed", "zh": "速度", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la vitesse"}, {"t": "noun", "fr": "le retard", "en": "delay; lateness", "zh": "延误；落后", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le retard"}, {"t": "noun", "fr": "le tour", "en": "lap; turn", "zh": "圈；轮", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le tour"}, {"t": "noun", "fr": "la tête", "en": "head; lead", "zh": "头；领先", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la tête"}, {"t": "noun", "fr": "le niveau", "en": "level", "zh": "水平", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le niveau"}, {"t": "noun", "fr": "le résultat", "en": "result", "zh": "结果", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le résultat"}, {"t": "noun", "fr": "la décision", "en": "decision", "zh": "决定", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la décision"}, {"t": "noun", "fr": "le but", "en": "goal; aim", "zh": "目标", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le but"}, {"t": "noun", "fr": "le champion", "en": "champion", "zh": "冠军", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le champion"}, {"t": "noun", "fr": "la saison", "en": "season", "zh": "赛季", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la saison"}, {"t": "noun", "fr": "le titre", "en": "title", "zh": "头衔；冠军", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le titre"}, {"t": "noun", "fr": "l'essai", "en": "test; practice", "zh": "测试；练习赛", "g": "m", "lvl": "A2", "trap": false, "id": "noun:l'essai"}, {"t": "noun", "fr": "le podium", "en": "podium", "zh": "领奖台", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le podium"}, {"t": "noun", "fr": "le drapeau", "en": "flag", "zh": "旗", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le drapeau"}, {"t": "noun", "fr": "la météo", "en": "weather forecast", "zh": "天气预报", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la météo"}, {"t": "noun", "fr": "le virage", "en": "corner; turn", "zh": "弯道", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le virage"}, {"t": "noun", "fr": "la victoire", "en": "victory", "zh": "胜利", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la victoire"}, {"t": "noun", "fr": "le pneu", "en": "tyre", "zh": "轮胎", "g": "m", "lvl": "A2", "trap": false, "id": "noun:le pneu"}, {"t": "noun", "fr": "la piste", "en": "track", "zh": "赛道", "g": "f", "lvl": "A2", "trap": false, "id": "noun:la piste"}, {"t": "noun", "fr": "le casque", "en": "helmet", "zh": "头盔", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le casque"}, {"t": "noun", "fr": "la voiture", "en": "car", "zh": "车", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la voiture"}, {"t": "noun", "fr": "la course", "en": "race", "zh": "比赛", "g": "f", "lvl": "A1", "trap": false, "id": "noun:la course"}, {"t": "noun", "fr": "le pilote", "en": "driver", "zh": "车手", "g": "m", "lvl": "A1", "trap": false, "id": "noun:le pilote"}, {"t": "noun", "fr": "l'équipe", "en": "team", "zh": "车队；团队", "g": "f", "lvl": "A1", "trap": false, "id": "noun:l'équipe"}, {"t": "noun", "fr": "l'espoir", "en": "hope", "zh": "希望", "g": "m", "lvl": "B1", "trap": false, "id": "noun:l'espoir"}, {"t": "noun", "fr": "la défaite", "en": "defeat", "zh": "战败，失利", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la défaite"}, {"t": "noun", "fr": "la réussite", "en": "success", "zh": "成就，成功", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la réussite"}, {"t": "noun", "fr": "l'échec", "en": "failure", "zh": "失败，挫折", "g": "m", "lvl": "B1", "trap": false, "id": "noun:l'échec"}, {"t": "noun", "fr": "l'avance", "en": "lead", "zh": "领先", "g": "f", "lvl": "B1", "trap": false, "id": "noun:l'avance"}, {"t": "noun", "fr": "la hausse", "en": "rise; increase", "zh": "上升", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la hausse"}, {"t": "noun", "fr": "la baisse", "en": "fall; decrease", "zh": "下降", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la baisse"}, {"t": "noun", "fr": "le règlement", "en": "regulations", "zh": "规则", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le règlement"}, {"t": "noun", "fr": "la pénalité", "en": "penalty", "zh": "处罚", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la pénalité"}, {"t": "noun", "fr": "l'amende", "en": "fine", "zh": "罚款", "g": "f", "lvl": "B1", "trap": false, "id": "noun:l'amende"}, {"t": "noun", "fr": "la pression", "en": "pressure", "zh": "压力", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la pression"}, {"t": "noun", "fr": "le manque", "en": "lack", "zh": "缺乏", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le manque"}, {"t": "noun", "fr": "la confiance", "en": "confidence; trust", "zh": "信心；信任", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la confiance"}, {"t": "noun", "fr": "le doute", "en": "doubt", "zh": "怀疑", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le doute"}, {"t": "noun", "fr": "la déception", "en": "disappointment", "zh": "失望", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la déception"}, {"t": "noun", "fr": "l'écart", "en": "gap; difference", "zh": "差距", "g": "m", "lvl": "B1", "trap": false, "id": "noun:l'écart"}, {"t": "noun", "fr": "le dépassement", "en": "overtaking", "zh": "超车", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le dépassement"}, {"t": "noun", "fr": "la stratégie", "en": "strategy", "zh": "策略", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la stratégie"}, {"t": "noun", "fr": "la foule", "en": "crowd", "zh": "人群", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la foule"}, {"t": "noun", "fr": "la panne", "en": "breakdown", "zh": "故障", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la panne"}, {"t": "noun", "fr": "l'écurie", "en": "racing team", "zh": "车队", "g": "f", "lvl": "B1", "trap": false, "id": "noun:l'écurie"}, {"t": "noun", "fr": "le constructeur", "en": "constructor; manufacturer", "zh": "制造商；车队", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le constructeur"}, {"t": "noun", "fr": "la monoplace", "en": "single-seater", "zh": "单座赛车", "g": "f", "lvl": "B1", "trap": false, "id": "noun:la monoplace"}, {"t": "noun", "fr": "le carburant", "en": "fuel", "zh": "燃料", "g": "m", "lvl": "B1", "trap": false, "id": "noun:le carburant"}, {"t": "noun", "fr": "la fierté", "en": "pride", "zh": "自豪", "g": "f", "lvl": "B2", "trap": false, "id": "noun:la fierté"}, {"t": "noun", "fr": "le soulagement", "en": "relief", "zh": "宽慰", "g": "m", "lvl": "B2", "trap": false, "id": "noun:le soulagement"}, {"t": "noun", "fr": "l'enjeu", "en": "what is at stake", "zh": "关键；利害", "g": "m", "lvl": "B2", "trap": false, "id": "noun:l'enjeu"}, {"t": "noun", "fr": "l'exigence", "en": "demand; high standard", "zh": "要求", "g": "f", "lvl": "B2", "trap": false, "id": "noun:l'exigence"}, {"t": "noun", "fr": "le ravitaillement", "en": "pit stop", "zh": "进站", "g": "m", "lvl": "B2", "trap": false, "id": "noun:le ravitaillement"}, {"t": "noun", "fr": "la remise en question", "en": "reassessment", "zh": "反思", "g": "f", "lvl": "C1", "trap": false, "id": "noun:la remise en question"}, {"t": "noun", "fr": "l'aboutissement", "en": "culmination", "zh": "最终成果", "g": "m", "lvl": "C1", "trap": false, "id": "noun:l'aboutissement"}, {"t": "noun", "fr": "le constat", "en": "observation; finding", "zh": "结论；判断", "g": "m", "lvl": "C1", "trap": false, "id": "noun:le constat"}, {"t": "verb", "fr": "gagner", "en": "to win", "zh": "赢", "lvl": "A1", "pres": {"je": "gagne", "tu": "gagnes", "il": "gagne", "nous": "gagnons", "vous": "gagnez", "ils": "gagnent"}, "aux": "avoir", "pp": "gagné", "fut": "gagner", "id": "verb:gagner", "ps": ["gagna", "gagnèrent"]}, {"t": "verb", "fr": "finir", "en": "to finish", "zh": "完成，结束", "lvl": "A1", "pres": {"je": "finis", "tu": "finis", "il": "finit", "nous": "finissons", "vous": "finissez", "ils": "finissent"}, "aux": "avoir", "pp": "fini", "fut": "finir", "id": "verb:finir", "ps": ["finit", "finirent"]}, {"t": "verb", "fr": "aller", "en": "to go", "zh": "去", "lvl": "A1", "pres": {"je": "vais", "tu": "vas", "il": "va", "nous": "allons", "vous": "allez", "ils": "vont"}, "aux": "être", "pp": "allé", "fut": "ir", "id": "verb:aller", "ps": ["alla", "allèrent"], "subj": ["aille", "ailles", "aille", "allions", "alliez", "aillent"]}, {"t": "verb", "fr": "faire", "en": "to do; to make", "zh": "做", "lvl": "A1", "pres": {"je": "fais", "tu": "fais", "il": "fait", "nous": "faisons", "vous": "faites", "ils": "font"}, "aux": "avoir", "pp": "fait", "fut": "fer", "id": "verb:faire", "ps": ["fit", "firent"], "subj": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"]}, {"t": "verb", "fr": "pouvoir", "en": "to be able to", "zh": "能", "lvl": "A1", "pres": {"je": "peux", "tu": "peux", "il": "peut", "nous": "pouvons", "vous": "pouvez", "ils": "peuvent"}, "aux": "avoir", "pp": "pu", "fut": "pourr", "id": "verb:pouvoir", "ps": ["put", "purent"], "subj": ["puisse", "puisses", "puisse", "puissions", "puissiez", "puissent"]}, {"t": "verb", "fr": "vouloir", "en": "to want", "zh": "想要", "lvl": "A1", "pres": {"je": "veux", "tu": "veux", "il": "veut", "nous": "voulons", "vous": "voulez", "ils": "veulent"}, "aux": "avoir", "pp": "voulu", "fut": "voudr", "id": "verb:vouloir", "ps": ["voulut", "voulurent"], "subj": ["veuille", "veuilles", "veuille", "voulions", "vouliez", "veuillent"], "impo": ["veuille", "veuillons", "veuillez"]}, {"t": "verb", "fr": "devoir", "en": "to have to", "zh": "必须", "lvl": "A1", "pres": {"je": "dois", "tu": "dois", "il": "doit", "nous": "devons", "vous": "devez", "ils": "doivent"}, "aux": "avoir", "pp": "dû", "fut": "devr", "id": "verb:devoir", "ps": ["dut", "durent"]}, {"t": "verb", "fr": "savoir", "en": "to know", "zh": "知道", "lvl": "A1", "pres": {"je": "sais", "tu": "sais", "il": "sait", "nous": "savons", "vous": "savez", "ils": "savent"}, "aux": "avoir", "pp": "su", "fut": "saur", "id": "verb:savoir", "ps": ["sut", "surent"], "subj": ["sache", "saches", "sache", "sachions", "sachiez", "sachent"], "impo": ["sache", "sachons", "sachez"]}, {"t": "verb", "fr": "venir", "en": "to come", "zh": "来", "lvl": "A1", "pres": {"je": "viens", "tu": "viens", "il": "vient", "nous": "venons", "vous": "venez", "ils": "viennent"}, "aux": "être", "pp": "venu", "fut": "viendr", "id": "verb:venir", "ps": ["vint", "vinrent"]}, {"t": "verb", "fr": "voir", "en": "to see", "zh": "看见", "lvl": "A1", "pres": {"je": "vois", "tu": "vois", "il": "voit", "nous": "voyons", "vous": "voyez", "ils": "voient"}, "aux": "avoir", "pp": "vu", "fut": "verr", "id": "verb:voir", "ps": ["vit", "virent"]}, {"t": "verb", "fr": "mettre", "en": "to put", "zh": "放", "lvl": "A1", "pres": {"je": "mets", "tu": "mets", "il": "met", "nous": "mettons", "vous": "mettez", "ils": "mettent"}, "aux": "avoir", "pp": "mis", "fut": "mettr", "id": "verb:mettre", "ps": ["mit", "mirent"]}, {"t": "verb", "fr": "dire", "en": "to say", "zh": "说", "lvl": "A1", "pres": {"je": "dis", "tu": "dis", "il": "dit", "nous": "disons", "vous": "dites", "ils": "disent"}, "aux": "avoir", "pp": "dit", "fut": "dir", "id": "verb:dire", "ps": ["dit", "dirent"]}, {"t": "verb", "fr": "prendre", "en": "to take", "zh": "拿", "lvl": "A1", "pres": {"je": "prends", "tu": "prends", "il": "prend", "nous": "prenons", "vous": "prenez", "ils": "prennent"}, "aux": "avoir", "pp": "pris", "fut": "prendr", "id": "verb:prendre", "ps": ["prit", "prirent"]}, {"t": "verb", "fr": "partir", "en": "to leave", "zh": "离开，出发", "lvl": "A1", "pres": {"je": "pars", "tu": "pars", "il": "part", "nous": "partons", "vous": "partez", "ils": "partent"}, "aux": "être", "pp": "parti", "fut": "partir", "id": "verb:partir", "ps": ["partit", "partirent"]}, {"t": "verb", "fr": "sortir", "en": "to go out", "zh": "出去", "lvl": "A2", "pres": {"je": "sors", "tu": "sors", "il": "sort", "nous": "sortons", "vous": "sortez", "ils": "sortent"}, "aux": "être", "pp": "sorti", "fut": "sortir", "id": "verb:sortir", "ps": ["sortit", "sortirent"]}, {"t": "verb", "fr": "dormir", "en": "to sleep", "zh": "睡", "lvl": "A2", "pres": {"je": "dors", "tu": "dors", "il": "dort", "nous": "dormons", "vous": "dormez", "ils": "dorment"}, "aux": "avoir", "pp": "dormi", "fut": "dormir", "id": "verb:dormir", "ps": ["dormit", "dormirent"]}, {"t": "verb", "fr": "écrire", "en": "to write", "zh": "写", "lvl": "A2", "pres": {"je": "écris", "tu": "écris", "il": "écrit", "nous": "écrivons", "vous": "écrivez", "ils": "écrivent"}, "aux": "avoir", "pp": "écrit", "fut": "écrir", "id": "verb:écrire", "ps": ["écrivit", "écrivirent"]}, {"t": "verb", "fr": "lire", "en": "to read", "zh": "读", "lvl": "A2", "pres": {"je": "lis", "tu": "lis", "il": "lit", "nous": "lisons", "vous": "lisez", "ils": "lisent"}, "aux": "avoir", "pp": "lu", "fut": "lir", "id": "verb:lire", "ps": ["lut", "lurent"]}, {"t": "verb", "fr": "boire", "en": "to drink", "zh": "喝", "lvl": "A2", "pres": {"je": "bois", "tu": "bois", "il": "boit", "nous": "buvons", "vous": "buvez", "ils": "boivent"}, "aux": "avoir", "pp": "bu", "fut": "boir", "id": "verb:boire", "ps": ["but", "burent"]}, {"t": "verb", "fr": "croire", "en": "to believe", "zh": "相信", "lvl": "A2", "pres": {"je": "crois", "tu": "crois", "il": "croit", "nous": "croyons", "vous": "croyez", "ils": "croient"}, "aux": "avoir", "pp": "cru", "fut": "croir", "id": "verb:croire", "ps": ["crut", "crurent"]}, {"t": "verb", "fr": "connaître", "en": "to know (be familiar)", "zh": "认识", "lvl": "A2", "pres": {"je": "connais", "tu": "connais", "il": "connaît", "nous": "connaissons", "vous": "connaissez", "ils": "connaissent"}, "aux": "avoir", "pp": "connu", "fut": "connaîtr", "id": "verb:connaître", "ps": ["connut", "connurent"]}, {"t": "verb", "fr": "attendre", "en": "to wait", "zh": "等，等候", "lvl": "A2", "pres": {"je": "attends", "tu": "attends", "il": "attend", "nous": "attendons", "vous": "attendez", "ils": "attendent"}, "aux": "avoir", "pp": "attendu", "fut": "attendr", "id": "verb:attendre", "ps": ["attendit", "attendirent"]}, {"t": "verb", "fr": "répondre", "en": "to answer", "zh": "回答，答复", "lvl": "A2", "pres": {"je": "réponds", "tu": "réponds", "il": "répond", "nous": "répondons", "vous": "répondez", "ils": "répondent"}, "aux": "avoir", "pp": "répondu", "fut": "répondr", "id": "verb:répondre", "ps": ["répondit", "répondirent"]}, {"t": "verb", "fr": "perdre", "en": "to lose", "zh": "失去", "lvl": "A2", "pres": {"je": "perds", "tu": "perds", "il": "perd", "nous": "perdons", "vous": "perdez", "ils": "perdent"}, "aux": "avoir", "pp": "perdu", "fut": "perdr", "id": "verb:perdre", "ps": ["perdit", "perdirent"]}, {"t": "verb", "fr": "vendre", "en": "to sell", "zh": "卖", "lvl": "A2", "pres": {"je": "vends", "tu": "vends", "il": "vend", "nous": "vendons", "vous": "vendez", "ils": "vendent"}, "aux": "avoir", "pp": "vendu", "fut": "vendr", "id": "verb:vendre", "ps": ["vendit", "vendirent"]}, {"t": "verb", "fr": "choisir", "en": "to choose", "zh": "挑选", "lvl": "A2", "pres": {"je": "choisis", "tu": "choisis", "il": "choisit", "nous": "choisissons", "vous": "choisissez", "ils": "choisissent"}, "aux": "avoir", "pp": "choisi", "fut": "choisir", "id": "verb:choisir", "ps": ["choisit", "choisirent"]}, {"t": "verb", "fr": "réussir", "en": "to succeed", "zh": "成功做到", "lvl": "A2", "pres": {"je": "réussis", "tu": "réussis", "il": "réussit", "nous": "réussissons", "vous": "réussissez", "ils": "réussissent"}, "aux": "avoir", "pp": "réussi", "fut": "réussir", "id": "verb:réussir", "ps": ["réussit", "réussirent"]}, {"t": "verb", "fr": "réfléchir", "en": "to think over", "zh": "思考", "lvl": "A2", "pres": {"je": "réfléchis", "tu": "réfléchis", "il": "réfléchit", "nous": "réfléchissons", "vous": "réfléchissez", "ils": "réfléchissent"}, "aux": "avoir", "pp": "réfléchi", "fut": "réfléchir", "id": "verb:réfléchir", "ps": ["réfléchit", "réfléchirent"]}, {"t": "verb", "fr": "conduire", "en": "to drive", "zh": "驾驶", "lvl": "A2", "pres": {"je": "conduis", "tu": "conduis", "il": "conduit", "nous": "conduisons", "vous": "conduisez", "ils": "conduisent"}, "aux": "avoir", "pp": "conduit", "fut": "conduir", "id": "verb:conduire", "ps": ["conduisit", "conduisirent"]}, {"t": "verb", "fr": "dépasser", "en": "to overtake", "zh": "超过", "lvl": "A2", "pres": {"je": "dépasse", "tu": "dépasses", "il": "dépasse", "nous": "dépassons", "vous": "dépassez", "ils": "dépassent"}, "aux": "avoir", "pp": "dépassé", "fut": "dépasser", "id": "verb:dépasser", "ps": ["dépassa", "dépassèrent"]}, {"t": "verb", "fr": "courir", "en": "to run", "zh": "跑", "lvl": "A2", "pres": {"je": "cours", "tu": "cours", "il": "court", "nous": "courons", "vous": "courez", "ils": "courent"}, "aux": "avoir", "pp": "couru", "fut": "courr", "id": "verb:courir", "ps": ["courut", "coururent"]}, {"t": "verb", "fr": "ouvrir", "en": "to open", "zh": "打开", "lvl": "A2", "pres": {"je": "ouvre", "tu": "ouvres", "il": "ouvre", "nous": "ouvrons", "vous": "ouvrez", "ils": "ouvrent"}, "aux": "avoir", "pp": "ouvert", "fut": "ouvrir", "id": "verb:ouvrir", "ps": ["ouvrit", "ouvrirent"]}, {"t": "verb", "fr": "offrir", "en": "to offer; to give", "zh": "提供", "lvl": "A2", "pres": {"je": "offre", "tu": "offres", "il": "offre", "nous": "offrons", "vous": "offrez", "ils": "offrent"}, "aux": "avoir", "pp": "offert", "fut": "offrir", "id": "verb:offrir", "ps": ["offrit", "offrirent"]}, {"t": "verb", "fr": "recevoir", "en": "to receive", "zh": "收到", "lvl": "B1", "pres": {"je": "reçois", "tu": "reçois", "il": "reçoit", "nous": "recevons", "vous": "recevez", "ils": "reçoivent"}, "aux": "avoir", "pp": "reçu", "fut": "recevr", "id": "verb:recevoir", "ps": ["reçut", "reçurent"]}, {"t": "verb", "fr": "devenir", "en": "to become", "zh": "变成", "lvl": "A2", "pres": {"je": "deviens", "tu": "deviens", "il": "devient", "nous": "devenons", "vous": "devenez", "ils": "deviennent"}, "aux": "être", "pp": "devenu", "fut": "deviendr", "id": "verb:devenir", "ps": ["devint", "devinrent"]}, {"t": "verb", "fr": "tenir", "en": "to hold", "zh": "握住", "lvl": "A2", "pres": {"je": "tiens", "tu": "tiens", "il": "tient", "nous": "tenons", "vous": "tenez", "ils": "tiennent"}, "aux": "avoir", "pp": "tenu", "fut": "tiendr", "id": "verb:tenir", "ps": ["tint", "tinrent"]}, {"t": "verb", "fr": "obtenir", "en": "to obtain", "zh": "获得", "lvl": "B1", "pres": {"je": "obtiens", "tu": "obtiens", "il": "obtient", "nous": "obtenons", "vous": "obtenez", "ils": "obtiennent"}, "aux": "avoir", "pp": "obtenu", "fut": "obtiendr", "id": "verb:obtenir", "ps": ["obtint", "obtinrent"]}, {"t": "verb", "fr": "vivre", "en": "to live", "zh": "生活", "lvl": "A2", "pres": {"je": "vis", "tu": "vis", "il": "vit", "nous": "vivons", "vous": "vivez", "ils": "vivent"}, "aux": "avoir", "pp": "vécu", "fut": "vivr", "id": "verb:vivre", "ps": ["vécut", "vécurent"]}, {"t": "verb", "fr": "suivre", "en": "to follow", "zh": "跟随", "lvl": "A2", "pres": {"je": "suis", "tu": "suis", "il": "suit", "nous": "suivons", "vous": "suivez", "ils": "suivent"}, "aux": "avoir", "pp": "suivi", "fut": "suivr", "id": "verb:suivre", "ps": ["suivit", "suivirent"]}, {"t": "verb", "fr": "appeler", "en": "to call", "zh": "叫", "lvl": "A2", "pres": {"je": "appelle", "tu": "appelles", "il": "appelle", "nous": "appelons", "vous": "appelez", "ils": "appellent"}, "aux": "avoir", "pp": "appelé", "fut": "appeller", "id": "verb:appeler", "ps": ["appela", "appelèrent"]}, {"t": "verb", "fr": "acheter", "en": "to buy", "zh": "买", "lvl": "A2", "pres": {"je": "achète", "tu": "achètes", "il": "achète", "nous": "achetons", "vous": "achetez", "ils": "achètent"}, "aux": "avoir", "pp": "acheté", "fut": "achèter", "id": "verb:acheter", "ps": ["acheta", "achetèrent"]}, {"t": "verb", "fr": "préférer", "en": "to prefer", "zh": "更喜欢", "lvl": "A2", "pres": {"je": "préfère", "tu": "préfères", "il": "préfère", "nous": "préférons", "vous": "préférez", "ils": "préfèrent"}, "aux": "avoir", "pp": "préféré", "fut": "préférer", "id": "verb:préférer", "ps": ["préféra", "préférèrent"]}, {"t": "verb", "fr": "essayer", "en": "to try", "zh": "尝试", "lvl": "A2", "pres": {"je": "essaie", "tu": "essaies", "il": "essaie", "nous": "essayons", "vous": "essayez", "ils": "essaient"}, "aux": "avoir", "pp": "essayé", "fut": "essaier", "id": "verb:essayer", "ps": ["essaya", "essayèrent"]}, {"t": "verb", "fr": "envoyer", "en": "to send", "zh": "发送", "lvl": "A2", "pres": {"je": "envoie", "tu": "envoies", "il": "envoie", "nous": "envoyons", "vous": "envoyez", "ils": "envoient"}, "aux": "avoir", "pp": "envoyé", "fut": "enverr", "id": "verb:envoyer", "ps": ["envoya", "envoyèrent"]}, {"t": "verb", "fr": "commencer", "en": "to begin", "zh": "开始，着手", "lvl": "A1", "pres": {"je": "commence", "tu": "commences", "il": "commence", "nous": "commençons", "vous": "commencez", "ils": "commencent"}, "aux": "avoir", "pp": "commencé", "fut": "commencer", "id": "verb:commencer", "ps": ["commença", "commencèrent"]}, {"t": "verb", "fr": "manger", "en": "to eat", "zh": "吃", "lvl": "A1", "pres": {"je": "mange", "tu": "manges", "il": "mange", "nous": "mangeons", "vous": "mangez", "ils": "mangent"}, "aux": "avoir", "pp": "mangé", "fut": "manger", "id": "verb:manger", "ps": ["mangea", "mangèrent"]}, {"t": "verb", "fr": "jeter", "en": "to throw", "zh": "扔", "lvl": "A2", "pres": {"je": "jette", "tu": "jettes", "il": "jette", "nous": "jetons", "vous": "jetez", "ils": "jettent"}, "aux": "avoir", "pp": "jeté", "fut": "jetter", "id": "verb:jeter", "ps": ["jeta", "jetèrent"]}, {"t": "verb", "fr": "battre", "en": "to beat", "zh": "击败", "lvl": "B1", "pres": {"je": "bats", "tu": "bats", "il": "bat", "nous": "battons", "vous": "battez", "ils": "battent"}, "aux": "avoir", "pp": "battu", "fut": "battr", "id": "verb:battre", "ps": ["battit", "battirent"]}, {"t": "verb", "fr": "atteindre", "en": "to reach", "zh": "达到", "lvl": "B1", "pres": {"je": "atteins", "tu": "atteins", "il": "atteint", "nous": "atteignons", "vous": "atteignez", "ils": "atteignent"}, "aux": "avoir", "pp": "atteint", "fut": "atteindr", "id": "verb:atteindre", "ps": ["atteignit", "atteignirent"]}, {"t": "verb", "fr": "craindre", "en": "to fear", "zh": "担心，畏惧", "lvl": "B1", "pres": {"je": "crains", "tu": "crains", "il": "craint", "nous": "craignons", "vous": "craignez", "ils": "craignent"}, "aux": "avoir", "pp": "craint", "fut": "craindr", "id": "verb:craindre", "ps": ["craignit", "craignirent"]}, {"t": "verb", "fr": "rejoindre", "en": "to join; to catch up", "zh": "追上", "lvl": "B1", "pres": {"je": "rejoins", "tu": "rejoins", "il": "rejoint", "nous": "rejoignons", "vous": "rejoignez", "ils": "rejoignent"}, "aux": "avoir", "pp": "rejoint", "fut": "rejoindr", "id": "verb:rejoindre", "ps": ["rejoignit", "rejoignirent"]}, {"t": "verb", "fr": "résoudre", "en": "to solve", "zh": "解决", "lvl": "B2", "pres": {"je": "résous", "tu": "résous", "il": "résout", "nous": "résolvons", "vous": "résolvez", "ils": "résolvent"}, "aux": "avoir", "pp": "résolu", "fut": "résoudr", "id": "verb:résoudre", "ps": ["résolut", "résolurent"]}, {"t": "verb", "fr": "convaincre", "en": "to convince", "zh": "说服", "lvl": "B2", "pres": {"je": "convaincs", "tu": "convaincs", "il": "convainc", "nous": "convainquons", "vous": "convainquez", "ils": "convainquent"}, "aux": "avoir", "pp": "convaincu", "fut": "convaincr", "id": "verb:convaincre", "ps": ["convainquit", "convainquirent"]}, {"t": "verb", "fr": "se plaindre", "en": "to complain", "zh": "抱怨", "lvl": "B2", "pres": {"je": "me plains", "tu": "te plains", "il": "se plaint", "nous": "nous plaignons", "vous": "vous plaignez", "ils": "se plaignent"}, "aux": "être", "pp": "plaint", "fut": "plaindr", "id": "verb:se plaindre", "ps": ["se plaignit", "se plaignirent"]}, {"t": "verb", "fr": "décevoir", "en": "to disappoint", "zh": "使失望", "lvl": "B2", "pres": {"je": "déçois", "tu": "déçois", "il": "déçoit", "nous": "décevons", "vous": "décevez", "ils": "déçoivent"}, "aux": "avoir", "pp": "déçu", "fut": "décevr", "id": "verb:décevoir", "ps": ["déçut", "déçurent"]}, {"t": "verb", "fr": "parvenir", "en": "to manage to", "zh": "得以", "lvl": "C1", "pres": {"je": "parviens", "tu": "parviens", "il": "parvient", "nous": "parvenons", "vous": "parvenez", "ils": "parviennent"}, "aux": "être", "pp": "parvenu", "fut": "parviendr", "id": "verb:parvenir", "ps": ["parvint", "parvinrent"]}, {"t": "adj", "fr": "rapide", "en": "fast", "zh": "快的", "lvl": "A1", "m": "rapide", "f": "rapide", "id": "adj:rapide"}, {"t": "adj", "fr": "bon", "en": "good", "zh": "好的", "lvl": "A1", "m": "bon", "f": "bonne", "id": "adj:bon"}, {"t": "adj", "fr": "beau", "en": "beautiful", "zh": "美的", "lvl": "A1", "m": "beau", "f": "belle", "id": "adj:beau"}, {"t": "adj", "fr": "nouveau", "en": "new", "zh": "新的", "lvl": "A1", "m": "nouveau", "f": "nouvelle", "id": "adj:nouveau"}, {"t": "adj", "fr": "vieux", "en": "old", "zh": "旧的", "lvl": "A1", "m": "vieux", "f": "vieille", "id": "adj:vieux"}, {"t": "adj", "fr": "gros", "en": "big; thick", "zh": "大的", "lvl": "A1", "m": "gros", "f": "grosse", "id": "adj:gros"}, {"t": "adj", "fr": "long", "en": "long", "zh": "长的", "lvl": "A1", "m": "long", "f": "longue", "id": "adj:long"}, {"t": "adj", "fr": "premier", "en": "first", "zh": "第一的", "lvl": "A1", "m": "premier", "f": "première", "id": "adj:premier"}, {"t": "adj", "fr": "cher", "en": "expensive; dear", "zh": "贵的；亲爱的", "lvl": "A1", "m": "cher", "f": "chère", "id": "adj:cher"}, {"t": "adj", "fr": "gentil", "en": "kind", "zh": "友善的", "lvl": "A2", "m": "gentil", "f": "gentille", "id": "adj:gentil"}, {"t": "adj", "fr": "heureux", "en": "happy", "zh": "开心的", "lvl": "A2", "m": "heureux", "f": "heureuse", "id": "adj:heureux"}, {"t": "adj", "fr": "sérieux", "en": "serious", "zh": "严肃的", "lvl": "A2", "m": "sérieux", "f": "sérieuse", "id": "adj:sérieux"}, {"t": "adj", "fr": "nerveux", "en": "nervous", "zh": "紧张的", "lvl": "A2", "m": "nerveux", "f": "nerveuse", "id": "adj:nerveux"}, {"t": "adj", "fr": "actif", "en": "active", "zh": "积极的", "lvl": "A2", "m": "actif", "f": "active", "id": "adj:actif"}, {"t": "adj", "fr": "sportif", "en": "sporting", "zh": "体育的", "lvl": "A2", "m": "sportif", "f": "sportive", "id": "adj:sportif"}, {"t": "adj", "fr": "neuf", "en": "brand new", "zh": "全新的", "lvl": "A2", "m": "neuf", "f": "neuve", "id": "adj:neuf"}, {"t": "adj", "fr": "blanc", "en": "white", "zh": "白的", "lvl": "A2", "m": "blanc", "f": "blanche", "id": "adj:blanc"}, {"t": "adj", "fr": "sec", "en": "dry", "zh": "干的", "lvl": "A2", "m": "sec", "f": "sèche", "id": "adj:sec"}, {"t": "adj", "fr": "public", "en": "public", "zh": "公开的", "lvl": "B1", "m": "public", "f": "publique", "id": "adj:public"}, {"t": "adj", "fr": "fier", "en": "proud", "zh": "自豪的", "lvl": "B1", "m": "fier", "f": "fière", "id": "adj:fier"}, {"t": "adj", "fr": "doux", "en": "soft; mild", "zh": "柔和的", "lvl": "B1", "m": "doux", "f": "douce", "id": "adj:doux"}, {"t": "adj", "fr": "faux", "en": "false", "zh": "错的", "lvl": "B1", "m": "faux", "f": "fausse", "id": "adj:faux"}, {"t": "adj", "fr": "franc", "en": "frank", "zh": "坦率的", "lvl": "B2", "m": "franc", "f": "franche", "id": "adj:franc"}, {"t": "adj", "fr": "inquiet", "en": "worried", "zh": "担心的", "lvl": "B1", "m": "inquiet", "f": "inquiète", "id": "adj:inquiet"}, {"t": "adj", "fr": "complet", "en": "complete; full", "zh": "完整的；满的", "lvl": "B1", "m": "complet", "f": "complète", "id": "adj:complet"}, {"t": "adj", "fr": "discret", "en": "discreet", "zh": "低调的", "lvl": "B2", "m": "discret", "f": "discrète", "id": "adj:discret"}, {"t": "adj", "fr": "ancien", "en": "former; old", "zh": "前任的；旧的", "lvl": "B1", "m": "ancien", "f": "ancienne", "id": "adj:ancien"}, {"t": "adj", "fr": "bas", "en": "low", "zh": "低的", "lvl": "B1", "m": "bas", "f": "basse", "id": "adj:bas"}, {"t": "adj", "fr": "frais", "en": "fresh; cool", "zh": "新鲜的；凉的", "lvl": "B1", "m": "frais", "f": "fraîche", "id": "adj:frais"}, {"t": "adj", "fr": "meilleur", "en": "better; best", "zh": "更好的", "lvl": "A2", "m": "meilleur", "f": "meilleure", "id": "adj:meilleur"}, {"t": "adj", "fr": "régulier", "en": "consistent", "zh": "稳定的", "lvl": "B1", "m": "régulier", "f": "régulière", "id": "adj:régulier"}, {"t": "adj", "fr": "puissant", "en": "powerful", "zh": "强大的", "lvl": "A2", "m": "puissant", "f": "puissante", "id": "adj:puissant"}, {"t": "adj", "fr": "prudent", "en": "cautious", "zh": "谨慎的", "lvl": "A2", "m": "prudent", "f": "prudente", "id": "adj:prudent"}, {"t": "adj", "fr": "fou", "en": "crazy", "zh": "疯的", "lvl": "B1", "m": "fou", "f": "folle", "id": "adj:fou"}, {"t": "adj", "fr": "mou", "en": "soft; limp", "zh": "软的", "lvl": "B2", "m": "mou", "f": "molle", "id": "adj:mou"}, {"t": "adj", "fr": "épais", "en": "thick", "zh": "厚的", "lvl": "B2", "m": "épais", "f": "épaisse", "id": "adj:épais"}, {"t": "ff", "fr": "actuellement", "en": "currently, right now", "zh": "目前，现在", "lvl": "A2", "looks": "actually", "wrong": "实际上（这是英语 actually 的意思，法语要说 en fait）", "id": "ff:actuellement"}, {"t": "ff", "fr": "éventuellement", "en": "possibly, if need be", "zh": "可能，必要时", "lvl": "B1", "looks": "eventually", "wrong": "最终（最终要说 finalement）", "id": "ff:éventuellement"}, {"t": "ff", "fr": "assister à", "en": "to attend", "zh": "出席，观看", "lvl": "A2", "looks": "to assist", "wrong": "帮助（帮助要说 aider）", "id": "ff:assister à"}, {"t": "ff", "fr": "attendre", "en": "to wait for", "zh": "等待", "lvl": "A1", "looks": "to attend", "wrong": "出席（出席要说 assister à）", "id": "ff:attendre"}, {"t": "ff", "fr": "demander", "en": "to ask", "zh": "问，请求", "lvl": "A1", "looks": "to demand", "wrong": "要求（强硬要求要说 exiger）", "id": "ff:demander"}, {"t": "ff", "fr": "rester", "en": "to stay", "zh": "留下", "lvl": "A1", "looks": "to rest", "wrong": "休息（休息要说 se reposer）", "id": "ff:rester"}, {"t": "ff", "fr": "sensible", "en": "sensitive", "zh": "敏感的", "lvl": "A2", "looks": "sensible", "wrong": "明智的（明智要说 raisonnable）", "id": "ff:sensible"}, {"t": "ff", "fr": "la librairie", "en": "bookshop", "zh": "书店", "lvl": "A2", "looks": "library", "wrong": "图书馆（图书馆是 la bibliothèque）", "id": "ff:la librairie"}, {"t": "ff", "fr": "la journée", "en": "day (duration)", "zh": "一整天", "lvl": "A1", "looks": "journey", "wrong": "旅程（旅程是 le voyage）", "id": "ff:la journée"}, {"t": "ff", "fr": "la figure", "en": "face", "zh": "脸", "lvl": "A2", "looks": "figure", "wrong": "数字（数字是 le chiffre）", "id": "ff:la figure"}, {"t": "ff", "fr": "la location", "en": "rental", "zh": "租赁", "lvl": "B1", "looks": "location", "wrong": "地点（地点是 le lieu / l'endroit）", "id": "ff:la location"}, {"t": "ff", "fr": "la monnaie", "en": "change; currency", "zh": "零钱；货币", "lvl": "A2", "looks": "money", "wrong": "钱（钱是 l'argent）", "id": "ff:la monnaie"}, {"t": "ff", "fr": "passer un examen", "en": "to take an exam", "zh": "参加考试", "lvl": "A2", "looks": "to pass an exam", "wrong": "通过考试（通过是 réussir un examen）", "id": "ff:passer un examen"}, {"t": "ff", "fr": "supporter", "en": "to put up with; to support", "zh": "忍受；支持", "lvl": "B1", "looks": "to support", "wrong": "（只表示支持时常用 soutenir）", "id": "ff:supporter"}, {"t": "ff", "fr": "blesser", "en": "to injure", "zh": "伤害", "lvl": "B1", "looks": "to bless", "wrong": "祝福（祝福是 bénir）", "id": "ff:blesser"}, {"t": "ff", "fr": "le caractère", "en": "personality; nature", "zh": "性格", "lvl": "A2", "looks": "character (in a story)", "wrong": "角色（故事角色是 le personnage）", "id": "ff:le caractère"}, {"t": "ff", "fr": "l'envie", "en": "desire, urge", "zh": "渴望", "lvl": "A2", "looks": "envy", "wrong": "嫉妒（嫉妒是 la jalousie）", "id": "ff:l'envie"}, {"t": "ff", "fr": "formidable", "en": "great, wonderful", "zh": "了不起的", "lvl": "A2", "looks": "formidable (fearsome)", "wrong": "可怕的", "id": "ff:formidable"}, {"t": "ff", "fr": "ignorer", "en": "to not know", "zh": "不知道", "lvl": "B1", "looks": "to ignore", "wrong": "忽视（忽视要说 ne pas tenir compte de）", "id": "ff:ignorer"}, {"t": "ff", "fr": "important", "en": "large, significant", "zh": "重要的；大量的", "lvl": "A2", "looks": "important only", "wrong": "（法语里也常表示'数量大'）", "id": "ff:important"}, {"t": "ff", "fr": "large", "en": "wide", "zh": "宽的", "lvl": "A1", "looks": "large (big)", "wrong": "大的（大要说 grand）", "id": "ff:large"}, {"t": "ff", "fr": "le magasin", "en": "shop", "zh": "商店", "lvl": "A1", "looks": "magazine", "wrong": "杂志（杂志是 le magazine / la revue）", "id": "ff:le magasin"}, {"t": "ff", "fr": "prétendre", "en": "to claim", "zh": "声称", "lvl": "B2", "looks": "to pretend", "wrong": "假装（假装是 faire semblant）", "id": "ff:prétendre"}, {"t": "ff", "fr": "quitter", "en": "to leave (a place/person)", "zh": "离开", "lvl": "A2", "looks": "to quit", "wrong": "放弃（放弃是 abandonner / renoncer）", "id": "ff:quitter"}, {"t": "ff", "fr": "sympathique", "en": "nice, friendly", "zh": "友好的", "lvl": "A2", "looks": "sympathetic", "wrong": "同情的（同情是 compatissant）", "id": "ff:sympathique"}, {"t": "ff", "fr": "l'avertissement", "en": "warning", "zh": "警告", "lvl": "B1", "looks": "advertisement", "wrong": "广告（广告是 la publicité）", "id": "ff:l'avertissement"}, {"t": "ff", "fr": "le raisin", "en": "grape", "zh": "葡萄", "lvl": "A2", "looks": "raisin", "wrong": "葡萄干（葡萄干是 le raisin sec）", "id": "ff:le raisin"}, {"t": "ff", "fr": "le pain", "en": "bread", "zh": "面包", "lvl": "A1", "looks": "pain", "wrong": "疼痛（疼痛是 la douleur）", "id": "ff:le pain"}, {"t": "ff", "fr": "rude", "en": "harsh, tough", "zh": "艰苦的", "lvl": "B2", "looks": "rude (impolite)", "wrong": "无礼的（无礼是 impoli）", "id": "ff:rude"}, {"t": "ff", "fr": "la chance", "en": "luck", "zh": "运气", "lvl": "A1", "looks": "chance (opportunity)", "wrong": "机会（机会是 l'occasion）", "id": "ff:la chance"}, {"t": "ff", "fr": "réaliser", "en": "to carry out; to realise", "zh": "实现；意识到", "lvl": "B1", "looks": "to realise only", "wrong": "（主要意思是'实现、完成'）", "id": "ff:réaliser"}, {"t": "conn", "fr": "cependant", "en": "however", "zh": "然而，可是", "lvl": "B1", "id": "conn:cependant"}, {"t": "conn", "fr": "pourtant", "en": "and yet", "zh": "可是", "lvl": "B1", "id": "conn:pourtant"}, {"t": "conn", "fr": "néanmoins", "en": "nevertheless", "zh": "尽管如此", "lvl": "B2", "id": "conn:néanmoins"}, {"t": "conn", "fr": "désormais", "en": "from now on", "zh": "从此", "lvl": "B1", "id": "conn:désormais"}, {"t": "conn", "fr": "d'ailleurs", "en": "besides; in fact", "zh": "而且", "lvl": "B1", "id": "conn:d'ailleurs"}, {"t": "conn", "fr": "en revanche", "en": "on the other hand", "zh": "相反", "lvl": "B1", "id": "conn:en revanche"}, {"t": "conn", "fr": "toutefois", "en": "however", "zh": "不过", "lvl": "B2", "id": "conn:toutefois"}, {"t": "conn", "fr": "en effet", "en": "indeed", "zh": "的确", "lvl": "B1", "id": "conn:en effet"}, {"t": "conn", "fr": "afin de", "en": "in order to", "zh": "为了", "lvl": "B1", "id": "conn:afin de"}, {"t": "conn", "fr": "malgré", "en": "despite", "zh": "尽管（+名词）", "lvl": "A2", "id": "conn:malgré"}, {"t": "conn", "fr": "grâce à", "en": "thanks to", "zh": "多亏", "lvl": "A2", "id": "conn:grâce à"}, {"t": "conn", "fr": "dès que", "en": "as soon as", "zh": "一旦", "lvl": "B1", "id": "conn:dès que"}, {"t": "conn", "fr": "tandis que", "en": "while, whereas", "zh": "而", "lvl": "B1", "id": "conn:tandis que"}, {"t": "conn", "fr": "bien que", "en": "although (+ subj.)", "zh": "虽然（+虚拟式）", "lvl": "B2", "id": "conn:bien que"}, {"t": "conn", "fr": "alors que", "en": "whereas; while", "zh": "而（表对比）", "lvl": "B1", "id": "conn:alors que"}, {"t": "conn", "fr": "au fur et à mesure", "en": "gradually", "zh": "逐渐", "lvl": "B2", "id": "conn:au fur et à mesure"}, {"t": "conn", "fr": "par ailleurs", "en": "moreover", "zh": "另外", "lvl": "B2", "id": "conn:par ailleurs"}, {"t": "conn", "fr": "voire", "en": "or even", "zh": "甚至", "lvl": "C1", "id": "conn:voire"}, {"t": "conn", "fr": "quoique", "en": "although", "zh": "虽然（书面，+虚拟式）", "lvl": "C1", "id": "conn:quoique"}, {"t": "conn", "fr": "puisque", "en": "since (given that)", "zh": "既然", "lvl": "B1", "id": "conn:puisque"}, {"t": "conn", "fr": "plutôt", "en": "rather", "zh": "更确切地说", "lvl": "A2", "id": "conn:plutôt"}, {"t": "conn", "fr": "environ", "en": "about, approximately", "zh": "大约", "lvl": "A2", "id": "conn:environ"}, {"t": "conn", "fr": "davantage", "en": "more", "zh": "更多", "lvl": "B2", "id": "conn:davantage"}, {"t": "conn", "fr": "en dépit de", "en": "in spite of", "zh": "尽管（书面语）", "lvl": "C1", "id": "conn:en dépit de"}, {"t": "conn", "fr": "dans la mesure où", "en": "insofar as", "zh": "就……而言", "lvl": "C1", "id": "conn:dans la mesure où"}, {"t": "noun", "fr": "le printemps", "en": "spring", "zh": "春天", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": false, "neu": "Au printemps, les jours rallongent.", "neuzh": "春天白天变长。", "id": "noun:le printemps"}, {"t": "noun", "fr": "l'été", "en": "summer", "zh": "夏天", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": true, "neu": "En été, il fait très chaud ici.", "neuzh": "夏天这里非常热。", "id": "noun:l'été"}, {"t": "noun", "fr": "l'automne", "en": "autumn", "zh": "秋天", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": false, "neu": "L'automne commence en septembre.", "neuzh": "秋天从九月开始。", "id": "noun:l'automne"}, {"t": "noun", "fr": "l'hiver", "en": "winter", "zh": "冬天", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": false, "neu": "L'hiver dure longtemps dans le nord.", "neuzh": "北方的冬天很长。", "id": "noun:l'hiver"}, {"t": "noun", "fr": "la fête", "en": "celebration; party", "zh": "节日；聚会", "g": "f", "lvl": "A1", "dom": "日期/季节/节日", "trap": false, "neu": "On organise une fête pour son anniversaire.", "neuzh": "大家为他的生日办了个聚会。", "id": "noun:la fête"}, {"t": "noun", "fr": "l'anniversaire", "en": "birthday", "zh": "生日", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": true, "neu": "Son anniversaire tombe un dimanche.", "neuzh": "他的生日正好是星期天。", "id": "noun:l'anniversaire"}, {"t": "noun", "fr": "le week-end", "en": "weekend", "zh": "周末", "g": "m", "lvl": "A1", "dom": "日期/季节/节日", "trap": false, "neu": "Le week-end, je me lève plus tard.", "neuzh": "周末我起得晚一些。", "id": "noun:le week-end"}, {"t": "noun", "fr": "le nom", "en": "name; surname", "zh": "姓；名字", "g": "m", "lvl": "A1", "dom": "数字/身份", "trap": false, "neu": "Écrivez votre nom en majuscules.", "neuzh": "请用大写字母写下你的姓。", "id": "noun:le nom"}, {"t": "noun", "fr": "l'âge", "en": "age", "zh": "年龄", "g": "m", "lvl": "A1", "dom": "数字/身份", "trap": true, "neu": "Il a l'âge de passer son permis.", "neuzh": "他到了可以考驾照的年纪。", "id": "noun:l'âge"}, {"t": "noun", "fr": "l'adresse", "en": "address", "zh": "地址", "g": "f", "lvl": "A1", "dom": "数字/身份", "trap": true, "neu": "Je n'ai pas son adresse exacte.", "neuzh": "我没有他确切的地址。", "id": "noun:l'adresse"}, {"t": "noun", "fr": "la langue", "en": "language; tongue", "zh": "语言；舌头", "g": "f", "lvl": "A1", "dom": "国家与国籍", "trap": false, "neu": "Le français est une langue difficile.", "neuzh": "法语是一门难学的语言。", "id": "noun:la langue"}, {"t": "noun", "fr": "la frontière", "en": "border", "zh": "边境", "g": "f", "lvl": "A2", "dom": "国家与国籍", "trap": false, "neu": "La frontière est fermée depuis hier.", "neuzh": "边境从昨天起就关闭了。", "id": "noun:la frontière"}, {"t": "noun", "fr": "l'étranger", "en": "foreigner; abroad", "zh": "外国人；国外", "g": "m", "lvl": "A2", "dom": "国家与国籍", "trap": false, "neu": "Il travaille à l'étranger depuis deux ans.", "neuzh": "他在国外工作两年了。", "id": "noun:l'étranger"}, {"t": "noun", "fr": "le frère", "en": "brother", "zh": "哥哥；弟弟", "g": "m", "lvl": "A1", "dom": "家庭与人际", "trap": false, "neu": "Mon frère habite à Lyon.", "neuzh": "我哥哥住在里昂。", "id": "noun:le frère"}, {"t": "noun", "fr": "la sœur", "en": "sister", "zh": "姐姐；妹妹", "g": "f", "lvl": "A1", "dom": "家庭与人际", "trap": false, "neu": "Sa sœur est médecin.", "neuzh": "他姐姐是医生。", "id": "noun:la sœur"}, {"t": "noun", "fr": "le voisin", "en": "neighbour", "zh": "邻居", "g": "m", "lvl": "A1", "dom": "家庭与人际", "trap": false, "neu": "Le voisin fait trop de bruit le soir.", "neuzh": "邻居晚上太吵了。", "id": "noun:le voisin"}, {"t": "noun", "fr": "le collègue", "en": "colleague", "zh": "同事", "g": "m", "lvl": "A2", "dom": "家庭与人际", "trap": false, "neu": "Un collègue m'a aidé à finir le dossier.", "neuzh": "一位同事帮我做完了这份材料。", "id": "noun:le collègue"}, {"t": "noun", "fr": "le train", "en": "train", "zh": "火车", "g": "m", "lvl": "A1", "dom": "交通工具", "trap": false, "neu": "Le train part dans dix minutes.", "neuzh": "火车十分钟后出发。", "id": "noun:le train"}, {"t": "noun", "fr": "l'avion", "en": "plane", "zh": "飞机", "g": "m", "lvl": "A1", "dom": "交通工具", "trap": true, "neu": "L'avion a deux heures de retard.", "neuzh": "飞机晚点两个小时。", "id": "noun:l'avion"}, {"t": "noun", "fr": "le vélo", "en": "bicycle", "zh": "自行车", "g": "m", "lvl": "A1", "dom": "交通工具", "trap": false, "neu": "Je vais au travail à vélo.", "neuzh": "我骑自行车上班。", "id": "noun:le vélo"}, {"t": "noun", "fr": "la gare", "en": "station", "zh": "火车站", "g": "f", "lvl": "A1", "dom": "交通工具", "trap": false, "neu": "On se retrouve devant la gare.", "neuzh": "我们在火车站前碰面。", "id": "noun:la gare"}, {"t": "noun", "fr": "le billet", "en": "ticket", "zh": "票", "g": "m", "lvl": "A1", "dom": "交通工具", "trap": false, "neu": "Le billet coûte vingt euros.", "neuzh": "票价二十欧元。", "id": "noun:le billet"}, {"t": "noun", "fr": "le voyage", "en": "trip", "zh": "旅行", "g": "m", "lvl": "A1", "dom": "假期与旅行", "trap": false, "neu": "Le voyage dure six heures.", "neuzh": "这趟旅程要六个小时。", "id": "noun:le voyage"}, {"t": "noun", "fr": "la valise", "en": "suitcase", "zh": "行李箱", "g": "f", "lvl": "A1", "dom": "假期与旅行", "trap": false, "neu": "Ma valise est trop lourde.", "neuzh": "我的行李箱太重了。", "id": "noun:la valise"}, {"t": "noun", "fr": "l'hôtel", "en": "hotel", "zh": "酒店", "g": "m", "lvl": "A1", "dom": "假期与旅行", "trap": true, "neu": "L'hôtel se trouve près du circuit.", "neuzh": "酒店就在赛道附近。", "id": "noun:l'hôtel"}, {"t": "noun", "fr": "la plage", "en": "beach", "zh": "海滩", "g": "f", "lvl": "A1", "dom": "假期与旅行", "trap": false, "neu": "La plage est à dix minutes à pied.", "neuzh": "海滩走路十分钟就到。", "id": "noun:la plage"}, {"t": "noun", "fr": "l'appartement", "en": "flat", "zh": "公寓", "g": "m", "lvl": "A1", "dom": "住房与家具", "trap": true, "neu": "L'appartement donne sur la rue.", "neuzh": "公寓朝着街道。", "id": "noun:l'appartement"}, {"t": "noun", "fr": "la chambre", "en": "bedroom", "zh": "卧室", "g": "f", "lvl": "A1", "dom": "住房与家具", "trap": false, "neu": "La chambre est petite mais claire.", "neuzh": "卧室不大但很亮。", "id": "noun:la chambre"}, {"t": "noun", "fr": "la cuisine", "en": "kitchen; cooking", "zh": "厨房；烹饪", "g": "f", "lvl": "A1", "dom": "住房与家具", "trap": false, "neu": "La cuisine française est réputée.", "neuzh": "法国菜很有名。", "id": "noun:la cuisine"}, {"t": "noun", "fr": "le loyer", "en": "rent", "zh": "房租", "g": "m", "lvl": "A2", "dom": "住房与家具", "trap": false, "neu": "Le loyer augmente chaque année.", "neuzh": "房租每年都涨。", "id": "noun:le loyer"}, {"t": "noun", "fr": "la clé", "en": "key", "zh": "钥匙", "g": "f", "lvl": "A1", "dom": "住房与家具", "trap": false, "neu": "J'ai perdu mes clés ce matin.", "neuzh": "我今天早上把钥匙弄丢了。", "id": "noun:la clé"}, {"t": "noun", "fr": "la rue", "en": "street", "zh": "街道", "g": "f", "lvl": "A1", "dom": "城市场所/商店", "trap": false, "neu": "La rue est fermée à la circulation.", "neuzh": "这条街禁止通行。", "id": "noun:la rue"}, {"t": "noun", "fr": "le quartier", "en": "neighbourhood", "zh": "街区", "g": "m", "lvl": "A2", "dom": "城市场所/商店", "trap": false, "neu": "Ce quartier est très vivant le soir.", "neuzh": "这个街区晚上很热闹。", "id": "noun:le quartier"}, {"t": "noun", "fr": "la banque", "en": "bank", "zh": "银行", "g": "f", "lvl": "A1", "dom": "城市场所/商店", "trap": false, "neu": "La banque ferme à dix-sept heures.", "neuzh": "银行下午五点关门。", "id": "noun:la banque"}, {"t": "noun", "fr": "la pharmacie", "en": "chemist's", "zh": "药店", "g": "f", "lvl": "A1", "dom": "城市场所/商店", "trap": false, "neu": "La pharmacie de garde est ouverte la nuit.", "neuzh": "值班药店晚上开门。", "id": "noun:la pharmacie"}, {"t": "noun", "fr": "le marché", "en": "market", "zh": "市场；集市", "g": "m", "lvl": "A1", "dom": "城市场所/商店", "trap": false, "neu": "Le marché a lieu le mercredi matin.", "neuzh": "集市在周三上午。", "id": "noun:le marché"}, {"t": "noun", "fr": "le repas", "en": "meal", "zh": "一餐", "g": "m", "lvl": "A1", "dom": "饮食与烹饪", "trap": false, "neu": "Le repas est servi à midi.", "neuzh": "午饭中午供应。", "id": "noun:le repas"}, {"t": "noun", "fr": "le plat", "en": "dish", "zh": "菜", "g": "m", "lvl": "A1", "dom": "饮食与烹饪", "trap": false, "neu": "Ce plat est trop salé.", "neuzh": "这道菜太咸了。", "id": "noun:le plat"}, {"t": "noun", "fr": "la boisson", "en": "drink", "zh": "饮料", "g": "f", "lvl": "A1", "dom": "饮食与烹饪", "trap": false, "neu": "Quelle boisson préférez-vous ?", "neuzh": "您更想喝点什么？", "id": "noun:la boisson"}, {"t": "noun", "fr": "le goût", "en": "taste", "zh": "味道", "g": "m", "lvl": "A2", "dom": "饮食与烹饪", "trap": false, "neu": "Ce fromage a un goût très fort.", "neuzh": "这种奶酪味道很重。", "id": "noun:le goût"}, {"t": "noun", "fr": "la recette", "en": "recipe", "zh": "食谱", "g": "f", "lvl": "A2", "dom": "饮食与烹饪", "trap": false, "neu": "Je suis la recette de ma grand-mère.", "neuzh": "我照着外婆的食谱做。", "id": "noun:la recette"}, {"t": "noun", "fr": "le vêtement", "en": "garment", "zh": "衣服", "g": "m", "lvl": "A1", "dom": "服饰与配件", "trap": false, "neu": "Je range mes vêtements dans l'armoire.", "neuzh": "我把衣服收进衣柜。", "id": "noun:le vêtement"}, {"t": "noun", "fr": "la chaussure", "en": "shoe", "zh": "鞋", "g": "f", "lvl": "A1", "dom": "服饰与配件", "trap": false, "neu": "Ces chaussures sont trop petites.", "neuzh": "这双鞋太小了。", "id": "noun:la chaussure"}, {"t": "noun", "fr": "la veste", "en": "jacket", "zh": "外套", "g": "f", "lvl": "A1", "dom": "服饰与配件", "trap": false, "neu": "Prends une veste, il fait frais.", "neuzh": "带件外套，天凉。", "id": "noun:la veste"}, {"t": "noun", "fr": "le vent", "en": "wind", "zh": "风", "g": "m", "lvl": "A1", "dom": "天气", "trap": false, "neu": "Le vent souffle fort aujourd'hui.", "neuzh": "今天风很大。", "id": "noun:le vent"}, {"t": "noun", "fr": "la neige", "en": "snow", "zh": "雪", "g": "f", "lvl": "A1", "dom": "天气", "trap": false, "neu": "La neige tombe depuis ce matin.", "neuzh": "从今天早上开始下雪。", "id": "noun:la neige"}, {"t": "noun", "fr": "le nuage", "en": "cloud", "zh": "云", "g": "m", "lvl": "A1", "dom": "天气", "trap": false, "neu": "Les nuages arrivent de l'ouest.", "neuzh": "云从西边过来。", "id": "noun:le nuage"}, {"t": "noun", "fr": "la chaleur", "en": "heat", "zh": "热", "g": "f", "lvl": "A2", "dom": "天气", "trap": false, "neu": "La chaleur est difficile à supporter.", "neuzh": "这种热很难受。", "id": "noun:la chaleur"}, {"t": "noun", "fr": "la santé", "en": "health", "zh": "健康", "g": "f", "lvl": "A2", "dom": "健康", "trap": false, "neu": "Il fait du sport pour sa santé.", "neuzh": "他为了健康运动。", "id": "noun:la santé"}, {"t": "noun", "fr": "le médecin", "en": "doctor", "zh": "医生", "g": "m", "lvl": "A2", "dom": "健康", "trap": false, "neu": "Le médecin lui conseille du repos.", "neuzh": "医生建议他休息。", "id": "noun:le médecin"}, {"t": "noun", "fr": "la douleur", "en": "pain", "zh": "疼痛", "g": "f", "lvl": "A2", "dom": "健康", "trap": false, "neu": "La douleur est revenue cette nuit.", "neuzh": "疼痛昨夜又犯了。", "id": "noun:la douleur"}, {"t": "noun", "fr": "le médicament", "en": "medicine", "zh": "药", "g": "m", "lvl": "A2", "dom": "健康", "trap": false, "neu": "Ce médicament se prend après le repas.", "neuzh": "这种药饭后服用。", "id": "noun:le médicament"}, {"t": "noun", "fr": "la blessure", "en": "injury", "zh": "伤", "g": "f", "lvl": "B1", "dom": "健康", "trap": false, "neu": "Sa blessure met des semaines à guérir.", "neuzh": "他的伤要几周才能好。", "id": "noun:la blessure"}, {"t": "noun", "fr": "la fatigue", "en": "tiredness", "zh": "疲劳", "g": "f", "lvl": "B1", "dom": "健康", "trap": false, "neu": "La fatigue se voit sur son visage.", "neuzh": "疲惫写在他脸上。", "id": "noun:la fatigue"}, {"t": "noun", "fr": "l'école", "en": "school", "zh": "学校", "g": "f", "lvl": "A1", "dom": "教育体系与学习", "trap": true, "neu": "L'école commence à huit heures.", "neuzh": "学校八点上课。", "id": "noun:l'école"}, {"t": "noun", "fr": "le cours", "en": "class; course", "zh": "课", "g": "m", "lvl": "A1", "dom": "教育体系与学习", "trap": false, "neu": "Le cours de français dure deux heures.", "neuzh": "法语课上两个小时。", "id": "noun:le cours"}, {"t": "noun", "fr": "l'examen", "en": "exam", "zh": "考试", "g": "m", "lvl": "A2", "dom": "教育体系与学习", "trap": true, "neu": "L'examen a lieu en juin.", "neuzh": "考试在六月举行。", "id": "noun:l'examen"}, {"t": "noun", "fr": "le diplôme", "en": "diploma", "zh": "文凭", "g": "m", "lvl": "B1", "dom": "教育体系与学习", "trap": false, "neu": "Son diplôme est reconnu à l'étranger.", "neuzh": "他的文凭在国外得到承认。", "id": "noun:le diplôme"}, {"t": "noun", "fr": "la note", "en": "mark; note", "zh": "分数；便条", "g": "f", "lvl": "A2", "dom": "教育体系与学习", "trap": false, "neu": "J'ai eu une bonne note à l'examen.", "neuzh": "我考试得了个好分数。", "id": "noun:la note"}, {"t": "noun", "fr": "le visage", "en": "face", "zh": "面孔", "g": "m", "lvl": "A2", "dom": "外貌/性格", "trap": false, "neu": "Son visage ne montre aucune émotion.", "neuzh": "他脸上没有任何表情。", "id": "noun:le visage"}, {"t": "noun", "fr": "les cheveux", "en": "hair", "zh": "头发", "g": "m", "lvl": "A1", "dom": "外貌/性格", "trap": false, "neu": "Il a les cheveux courts et bruns.", "neuzh": "他留着棕色短发。", "id": "noun:les cheveux"}, {"t": "noun", "fr": "le sourire", "en": "smile", "zh": "微笑", "g": "m", "lvl": "A2", "dom": "外貌/性格", "trap": false, "neu": "Son sourire rassure tout le monde.", "neuzh": "他的微笑让所有人安心。", "id": "noun:le sourire"}, {"t": "noun", "fr": "la colère", "en": "anger", "zh": "愤怒", "g": "f", "lvl": "B1", "dom": "情感与情绪", "trap": false, "neu": "Sa colère est compréhensible.", "neuzh": "他的愤怒可以理解。", "id": "noun:la colère"}, {"t": "noun", "fr": "la joie", "en": "joy", "zh": "喜悦", "g": "f", "lvl": "B1", "dom": "情感与情绪", "trap": false, "neu": "La joie se lit sur tous les visages.", "neuzh": "喜悦写在每个人脸上。", "id": "noun:la joie"}, {"t": "noun", "fr": "la tristesse", "en": "sadness", "zh": "悲伤", "g": "f", "lvl": "B1", "dom": "情感与情绪", "trap": false, "neu": "Une profonde tristesse suit l'annonce.", "neuzh": "消息公布后是一片深深的悲伤。", "id": "noun:la tristesse"}, {"t": "noun", "fr": "l'inquiétude", "en": "worry", "zh": "担忧", "g": "f", "lvl": "B1", "dom": "情感与情绪", "trap": true, "neu": "L'inquiétude grandit dans l'équipe.", "neuzh": "队里的担忧在加深。", "id": "noun:l'inquiétude"}, {"t": "noun", "fr": "la surprise", "en": "surprise", "zh": "惊讶", "g": "f", "lvl": "A2", "dom": "情感与情绪", "trap": false, "neu": "Sa réaction est une vraie surprise.", "neuzh": "他的反应确实出人意料。", "id": "noun:la surprise"}, {"t": "noun", "fr": "la marque", "en": "brand", "zh": "品牌", "g": "f", "lvl": "B1", "dom": "时尚", "trap": false, "neu": "Cette marque sponsorise plusieurs équipes.", "neuzh": "这个品牌赞助了好几支队伍。", "id": "noun:la marque"}, {"t": "noun", "fr": "le style", "en": "style", "zh": "风格", "g": "m", "lvl": "B1", "dom": "时尚", "trap": false, "neu": "Son style de pilotage est agressif.", "neuzh": "他的驾驶风格很激进。", "id": "noun:le style"}, {"t": "noun", "fr": "le roman", "en": "novel", "zh": "小说", "g": "m", "lvl": "B1", "dom": "文化题材", "trap": false, "neu": "Ce roman a été traduit en vingt langues.", "neuzh": "这本小说被译成二十种语言。", "id": "noun:le roman"}, {"t": "noun", "fr": "le tableau", "en": "painting; board", "zh": "画；板", "g": "m", "lvl": "B1", "dom": "文化题材", "trap": false, "neu": "Ce tableau date du dix-neuvième siècle.", "neuzh": "这幅画是十九世纪的。", "id": "noun:le tableau"}, {"t": "noun", "fr": "le spectacle", "en": "show", "zh": "演出", "g": "m", "lvl": "B1", "dom": "文化题材", "trap": false, "neu": "Le spectacle commence à vingt heures.", "neuzh": "演出晚上八点开始。", "id": "noun:le spectacle"}, {"t": "noun", "fr": "la chanson", "en": "song", "zh": "歌曲", "g": "f", "lvl": "A2", "dom": "文化题材", "trap": false, "neu": "Cette chanson passe partout en ce moment.", "neuzh": "这首歌现在到处都在放。", "id": "noun:la chanson"}, {"t": "noun", "fr": "la presse", "en": "press", "zh": "新闻界", "g": "f", "lvl": "B1", "dom": "媒体与时事", "trap": false, "neu": "La presse spécialisée critique cette décision.", "neuzh": "专业媒体批评了这个决定。", "id": "noun:la presse"}, {"t": "noun", "fr": "le journal", "en": "newspaper", "zh": "报纸", "g": "m", "lvl": "A2", "dom": "媒体与时事", "trap": false, "neu": "Le journal publie un long reportage.", "neuzh": "这份报纸发表了一篇长篇报道。", "id": "noun:le journal"}, {"t": "noun", "fr": "l'émission", "en": "programme (broadcast)", "zh": "节目", "g": "f", "lvl": "B1", "dom": "媒体与时事", "trap": true, "neu": "L'émission est diffusée en direct.", "neuzh": "节目是直播的。", "id": "noun:l'émission"}, {"t": "noun", "fr": "le reportage", "en": "report", "zh": "报道", "g": "m", "lvl": "B1", "dom": "媒体与时事", "trap": false, "neu": "Ce reportage dure quarante minutes.", "neuzh": "这篇报道有四十分钟。", "id": "noun:le reportage"}, {"t": "noun", "fr": "la société", "en": "society; company", "zh": "社会；公司", "g": "f", "lvl": "B1", "dom": "社会趋势与问题", "trap": false, "neu": "La société évolue plus vite que la loi.", "neuzh": "社会的变化比法律快。", "id": "noun:la société"}, {"t": "noun", "fr": "l'inégalité", "en": "inequality", "zh": "不平等", "g": "f", "lvl": "B2", "dom": "社会趋势与问题", "trap": true, "neu": "Les inégalités se creusent depuis dix ans.", "neuzh": "十年来不平等在加剧。", "id": "noun:l'inégalité"}, {"t": "noun", "fr": "le chômage", "en": "unemployment", "zh": "失业", "g": "m", "lvl": "B2", "dom": "社会趋势与问题", "trap": false, "neu": "Le chômage recule légèrement ce trimestre.", "neuzh": "本季度失业率略有下降。", "id": "noun:le chômage"}, {"t": "noun", "fr": "la grève", "en": "strike", "zh": "罢工", "g": "f", "lvl": "B2", "dom": "社会趋势与问题", "trap": false, "neu": "La grève perturbe tous les transports.", "neuzh": "罢工打乱了所有交通。", "id": "noun:la grève"}, {"t": "noun", "fr": "l'environnement", "en": "environment", "zh": "环境", "g": "m", "lvl": "B2", "dom": "环境/气候/生态", "trap": true, "neu": "La protection de l'environnement coûte cher.", "neuzh": "环境保护代价高昂。", "id": "noun:l'environnement"}, {"t": "noun", "fr": "le climat", "en": "climate", "zh": "气候", "g": "m", "lvl": "B2", "dom": "环境/气候/生态", "trap": false, "neu": "Le climat se réchauffe plus vite que prévu.", "neuzh": "气候变暖比预期更快。", "id": "noun:le climat"}, {"t": "noun", "fr": "la pollution", "en": "pollution", "zh": "污染", "g": "f", "lvl": "B2", "dom": "环境/气候/生态", "trap": false, "neu": "La pollution de l'air inquiète les habitants.", "neuzh": "空气污染让居民担忧。", "id": "noun:la pollution"}, {"t": "noun", "fr": "le déchet", "en": "waste", "zh": "废物", "g": "m", "lvl": "B2", "dom": "环境/气候/生态", "trap": false, "neu": "Les déchets plastiques finissent dans la mer.", "neuzh": "塑料垃圾最终流进大海。", "id": "noun:le déchet"}, {"t": "noun", "fr": "l'énergie", "en": "energy", "zh": "能源", "g": "f", "lvl": "B1", "dom": "环境/气候/生态", "trap": true, "neu": "Cette énergie provient de sources durables.", "neuzh": "这种能源来自可持续来源。", "id": "noun:l'énergie"}, {"t": "noun", "fr": "l'économie", "en": "economy", "zh": "经济", "g": "f", "lvl": "B2", "dom": "经济", "trap": true, "neu": "L'économie ralentit depuis le printemps.", "neuzh": "经济从春天起开始放缓。", "id": "noun:l'économie"}, {"t": "noun", "fr": "l'entreprise", "en": "company", "zh": "企业", "g": "f", "lvl": "B1", "dom": "经济", "trap": true, "neu": "L'entreprise emploie trois mille personnes.", "neuzh": "这家企业有三千名员工。", "id": "noun:l'entreprise"}, {"t": "noun", "fr": "le salaire", "en": "salary", "zh": "工资", "g": "m", "lvl": "B1", "dom": "经济", "trap": false, "neu": "Son salaire a augmenté de cinq pour cent.", "neuzh": "他的工资涨了百分之五。", "id": "noun:le salaire"}, {"t": "noun", "fr": "l'impôt", "en": "tax", "zh": "税", "g": "m", "lvl": "B2", "dom": "经济", "trap": true, "neu": "Les impôts financent les services publics.", "neuzh": "税收用于支撑公共服务。", "id": "noun:l'impôt"}, {"t": "noun", "fr": "la croissance", "en": "growth", "zh": "增长", "g": "f", "lvl": "B2", "dom": "经济", "trap": false, "neu": "La croissance reste faible cette année.", "neuzh": "今年的增长依然疲软。", "id": "noun:la croissance"}, {"t": "noun", "fr": "le logiciel", "en": "software", "zh": "软件", "g": "m", "lvl": "B2", "dom": "信息与通信技术", "trap": false, "neu": "Le logiciel analyse les données en direct.", "neuzh": "这个软件实时分析数据。", "id": "noun:le logiciel"}, {"t": "noun", "fr": "le réseau", "en": "network", "zh": "网络", "g": "m", "lvl": "B1", "dom": "信息与通信技术", "trap": false, "neu": "Le réseau est saturé pendant la course.", "neuzh": "比赛期间网络拥堵。", "id": "noun:le réseau"}, {"t": "noun", "fr": "les données", "en": "data", "zh": "数据", "g": "f", "lvl": "B1", "dom": "信息与通信技术", "trap": false, "neu": "Les données sont envoyées au stand.", "neuzh": "数据被传回维修区。", "id": "noun:les données"}, {"t": "noun", "fr": "l'écran", "en": "screen", "zh": "屏幕", "g": "m", "lvl": "A2", "dom": "信息与通信技术", "trap": true, "neu": "L'écran affiche les temps au tour.", "neuzh": "屏幕上显示着圈速。", "id": "noun:l'écran"}, {"t": "noun", "fr": "le mot de passe", "en": "password", "zh": "密码", "g": "m", "lvl": "A2", "dom": "信息与通信技术", "trap": false, "neu": "J'ai oublié mon mot de passe.", "neuzh": "我忘了密码。", "id": "noun:le mot de passe"}, {"t": "noun", "fr": "le gouvernement", "en": "government", "zh": "政府", "g": "m", "lvl": "B2", "dom": "政治与社会价值", "trap": false, "neu": "Le gouvernement annonce une nouvelle mesure.", "neuzh": "政府宣布了一项新措施。", "id": "noun:le gouvernement"}, {"t": "noun", "fr": "la loi", "en": "law", "zh": "法律", "g": "f", "lvl": "B1", "dom": "政治与社会价值", "trap": false, "neu": "La loi entre en vigueur en janvier.", "neuzh": "法律一月生效。", "id": "noun:la loi"}, {"t": "noun", "fr": "le droit", "en": "right; law", "zh": "权利；法学", "g": "m", "lvl": "B1", "dom": "政治与社会价值", "trap": false, "neu": "Chacun a le droit de s'exprimer.", "neuzh": "每个人都有表达的权利。", "id": "noun:le droit"}, {"t": "noun", "fr": "l'élection", "en": "election", "zh": "选举", "g": "f", "lvl": "B2", "dom": "政治与社会价值", "trap": true, "neu": "L'élection aura lieu au printemps.", "neuzh": "选举将在春天举行。", "id": "noun:l'élection"}, {"t": "noun", "fr": "la liberté", "en": "freedom", "zh": "自由", "g": "f", "lvl": "B1", "dom": "政治与社会价值", "trap": false, "neu": "La liberté de la presse est garantie.", "neuzh": "新闻自由受到保障。", "id": "noun:la liberté"}, {"t": "noun", "fr": "l'égalité", "en": "equality", "zh": "平等", "g": "f", "lvl": "B2", "dom": "政治与社会价值", "trap": true, "neu": "L'égalité devant la loi est un principe.", "neuzh": "法律面前人人平等是一项原则。", "id": "noun:l'égalité"}, {"t": "noun", "fr": "la coutume", "en": "custom", "zh": "习俗", "g": "f", "lvl": "B1", "dom": "风俗与传统", "trap": false, "neu": "Cette coutume remonte au Moyen Âge.", "neuzh": "这个习俗可以追溯到中世纪。", "id": "noun:la coutume"}, {"t": "noun", "fr": "la tradition", "en": "tradition", "zh": "传统", "g": "f", "lvl": "A2", "dom": "风俗与传统", "trap": false, "neu": "La tradition veut qu'on arrose le vainqueur.", "neuzh": "按传统要给胜者浇酒。", "id": "noun:la tradition"}, {"t": "adj", "fr": "content", "en": "pleased", "zh": "满意的", "lvl": "A1", "dom": "情感与情绪", "m": "content", "f": "contente", "neu": "Un client content. Une équipe contente.", "neuzh": "一位满意的客户。一支满意的队伍。", "id": "adj:content"}, {"t": "adj", "fr": "triste", "en": "sad", "zh": "伤心的", "lvl": "A1", "dom": "情感与情绪", "m": "triste", "f": "triste", "neu": "Un moment triste. Une nouvelle triste.", "neuzh": "一个伤心的时刻。一个伤心的消息。", "id": "adj:triste"}, {"t": "adj", "fr": "fatigué", "en": "tired", "zh": "疲惫的", "lvl": "A1", "dom": "健康", "m": "fatigué", "f": "fatiguée", "neu": "Un pilote fatigué. Une équipe fatiguée.", "neuzh": "一位疲惫的车手。一支疲惫的队伍。", "id": "adj:fatigué"}, {"t": "adj", "fr": "malade", "en": "ill", "zh": "生病的", "lvl": "A1", "dom": "健康", "m": "malade", "f": "malade", "neu": "Un mécanicien malade. Une personne malade.", "neuzh": "一位生病的技师。一位生病的人。", "id": "adj:malade"}, {"t": "adj", "fr": "gratuit", "en": "free (no cost)", "zh": "免费的", "lvl": "A2", "dom": "经济", "m": "gratuit", "f": "gratuite", "neu": "Un service gratuit. Une entrée gratuite.", "neuzh": "免费的服务。免费的入场。", "id": "adj:gratuit"}, {"t": "adj", "fr": "chaud", "en": "hot", "zh": "热的", "lvl": "A1", "dom": "天气", "m": "chaud", "f": "chaude", "neu": "Un moteur chaud. Une journée chaude.", "neuzh": "发热的引擎。炎热的一天。", "id": "adj:chaud"}, {"t": "adj", "fr": "froid", "en": "cold", "zh": "冷的", "lvl": "A1", "dom": "天气", "m": "froid", "f": "froide", "neu": "Un pneu froid. Une nuit froide.", "neuzh": "冷的轮胎。寒冷的夜。", "id": "adj:froid"}, {"t": "adj", "fr": "jeune", "en": "young", "zh": "年轻的", "lvl": "A1", "dom": "外貌/性格", "m": "jeune", "f": "jeune", "neu": "Un jeune pilote. Une jeune équipe.", "neuzh": "一位年轻车手。一支年轻的队伍。", "id": "adj:jeune"}, {"t": "adj", "fr": "naturel", "en": "natural", "zh": "自然的", "lvl": "B1", "dom": "环境/气候/生态", "m": "naturel", "f": "naturelle", "neu": "Un phénomène naturel. Une réaction naturelle.", "neuzh": "一种自然现象。一种自然反应。", "id": "adj:naturel"}, {"t": "adj", "fr": "quotidien", "en": "daily", "zh": "日常的", "lvl": "B1", "dom": "日常活动", "m": "quotidien", "f": "quotidienne", "neu": "Un entraînement quotidien. Une routine quotidienne.", "neuzh": "每日训练。日常习惯。", "id": "adj:quotidien"}, {"t": "adj", "fr": "essentiel", "en": "essential", "zh": "关键的", "lvl": "B1", "dom": "社会趋势与问题", "m": "essentiel", "f": "essentielle", "neu": "Un point essentiel. Une question essentielle.", "neuzh": "一个关键点。一个关键问题。", "id": "adj:essentiel"}, {"t": "adj", "fr": "traditionnel", "en": "traditional", "zh": "传统的", "lvl": "B1", "dom": "风俗与传统", "m": "traditionnel", "f": "traditionnelle", "neu": "Un plat traditionnel. Une fête traditionnelle.", "neuzh": "一道传统菜。一个传统节日。", "id": "adj:traditionnel"}, {"t": "adj", "fr": "mondial", "en": "world (adj.)", "zh": "世界的", "lvl": "A2", "dom": "文化题材", "m": "mondial", "f": "mondiale", "neu": "Le championnat mondial. La presse mondiale.", "neuzh": "世界锦标赛。世界媒体。", "id": "adj:mondial"}, {"t": "adj", "fr": "économique", "en": "economic", "zh": "经济的", "lvl": "B2", "dom": "经济", "m": "économique", "f": "économique", "neu": "Un modèle économique. Une crise économique.", "neuzh": "一种经济模式。一场经济危机。", "id": "adj:économique"}, {"t": "adj", "fr": "écologique", "en": "ecological", "zh": "生态的", "lvl": "B2", "dom": "环境/气候/生态", "m": "écologique", "f": "écologique", "neu": "Un carburant écologique. Une solution écologique.", "neuzh": "一种生态燃料。一个生态方案。", "id": "adj:écologique"}, {"t": "adj", "fr": "numérique", "en": "digital", "zh": "数字的", "lvl": "B2", "dom": "信息与通信技术", "m": "numérique", "f": "numérique", "neu": "Un outil numérique. Une plateforme numérique.", "neuzh": "一个数字工具。一个数字平台。", "id": "adj:numérique"}, {"t": "verb", "fr": "apprendre", "en": "to learn", "zh": "学习", "lvl": "A1", "dom": "教育体系与学习", "pres": {"je": "apprends", "tu": "apprends", "il": "apprend", "nous": "apprenons", "vous": "apprenez", "ils": "apprennent"}, "aux": "avoir", "pp": "appris", "fut": "apprendr", "neu": "J'apprends le français depuis un an.", "neuzh": "我学法语一年了。", "id": "verb:apprendre", "ps": ["apprit", "apprirent"]}, {"t": "verb", "fr": "comprendre", "en": "to understand", "zh": "理解", "lvl": "A1", "dom": "教育体系与学习", "pres": {"je": "comprends", "tu": "comprends", "il": "comprend", "nous": "comprenons", "vous": "comprenez", "ils": "comprennent"}, "aux": "avoir", "pp": "compris", "fut": "comprendr", "neu": "Je ne comprends pas cette règle.", "neuzh": "我不理解这条规则。", "id": "verb:comprendre", "ps": ["comprit", "comprirent"]}, {"t": "verb", "fr": "expliquer", "en": "to explain", "zh": "解释", "lvl": "A2", "dom": "教育体系与学习", "pres": {"je": "explique", "tu": "expliques", "il": "explique", "nous": "expliquons", "vous": "expliquez", "ils": "expliquent"}, "aux": "avoir", "pp": "expliqué", "fut": "expliquer", "neu": "L'ingénieur explique le problème simplement.", "neuzh": "工程师简单地解释了问题。", "id": "verb:expliquer", "ps": ["expliqua", "expliquèrent"]}, {"t": "verb", "fr": "chercher", "en": "to look for", "zh": "寻找", "lvl": "A1", "dom": "日常活动", "pres": {"je": "cherche", "tu": "cherches", "il": "cherche", "nous": "cherchons", "vous": "cherchez", "ils": "cherchent"}, "aux": "avoir", "pp": "cherché", "fut": "chercher", "neu": "Je cherche mes clés depuis dix minutes.", "neuzh": "我找钥匙找了十分钟。", "id": "verb:chercher", "ps": ["chercha", "cherchèrent"]}, {"t": "verb", "fr": "trouver", "en": "to find", "zh": "找到", "lvl": "A1", "dom": "日常活动", "pres": {"je": "trouve", "tu": "trouves", "il": "trouve", "nous": "trouvons", "vous": "trouvez", "ils": "trouvent"}, "aux": "avoir", "pp": "trouvé", "fut": "trouver", "neu": "On trouve toujours une solution.", "neuzh": "总会找到办法的。", "id": "verb:trouver", "ps": ["trouva", "trouvèrent"]}, {"t": "verb", "fr": "aider", "en": "to help", "zh": "帮助", "lvl": "A1", "dom": "家庭与人际", "pres": {"je": "aide", "tu": "aides", "il": "aide", "nous": "aidons", "vous": "aidez", "ils": "aident"}, "aux": "avoir", "pp": "aidé", "fut": "aider", "neu": "Mon voisin m'aide à déménager.", "neuzh": "我邻居帮我搬家。", "id": "verb:aider", "ps": ["aida", "aidèrent"]}, {"t": "verb", "fr": "changer", "en": "to change", "zh": "改变", "lvl": "A1", "dom": "日常活动", "pres": {"je": "change", "tu": "changes", "il": "change", "nous": "changeons", "vous": "changez", "ils": "changent"}, "aux": "avoir", "pp": "changé", "fut": "changer", "neu": "Nous changeons d'avis après la réunion.", "neuzh": "开完会我们改变了想法。", "id": "verb:changer", "ps": ["changea", "changèrent"]}, {"t": "verb", "fr": "augmenter", "en": "to increase", "zh": "增加", "lvl": "B1", "dom": "经济", "pres": {"je": "augmente", "tu": "augmentes", "il": "augmente", "nous": "augmentons", "vous": "augmentez", "ils": "augmentent"}, "aux": "avoir", "pp": "augmenté", "fut": "augmenter", "neu": "Les prix augmentent chaque année.", "neuzh": "物价每年都涨。", "id": "verb:augmenter", "ps": ["augmenta", "augmentèrent"]}, {"t": "verb", "fr": "protéger", "en": "to protect", "zh": "保护", "lvl": "B1", "dom": "环境/气候/生态", "pres": {"je": "protège", "tu": "protèges", "il": "protège", "nous": "protégeons", "vous": "protégez", "ils": "protègent"}, "aux": "avoir", "pp": "protégé", "fut": "protéger", "neu": "Nous protégeons l'environnement par de petits gestes.", "neuzh": "我们用小举动保护环境。", "id": "verb:protéger", "ps": ["protégea", "protégèrent"]}, {"t": "verb", "fr": "permettre", "en": "to allow", "zh": "允许", "lvl": "B1", "dom": "政治与社会价值", "pres": {"je": "permets", "tu": "permets", "il": "permet", "nous": "permettons", "vous": "permettez", "ils": "permettent"}, "aux": "avoir", "pp": "permis", "fut": "permettr", "neu": "La loi permet de faire appel.", "neuzh": "法律允许上诉。", "id": "verb:permettre", "ps": ["permit", "permirent"]}, {"t": "noun", "fr": "le sport", "en": "sport", "zh": "运动", "g": "m", "lvl": "A1", "dom": "休闲与运动", "trap": false, "neu": "Il fait du sport tous les matins.", "neuzh": "他每天早上运动。", "id": "noun:le sport"}, {"t": "noun", "fr": "le jeu", "en": "game", "zh": "游戏", "g": "m", "lvl": "A1", "dom": "休闲与运动", "trap": false, "neu": "Ce jeu se joue à deux.", "neuzh": "这个游戏两个人玩。", "id": "noun:le jeu"}, {"t": "noun", "fr": "la musique", "en": "music", "zh": "音乐", "g": "f", "lvl": "A1", "dom": "休闲与运动", "trap": false, "neu": "Il écoute de la musique avant la course.", "neuzh": "他赛前听音乐。", "id": "noun:la musique"}, {"t": "noun", "fr": "le film", "en": "film", "zh": "电影", "g": "m", "lvl": "A1", "dom": "休闲与运动", "trap": false, "neu": "Le film dure deux heures.", "neuzh": "这部电影两个小时。", "id": "noun:le film"}, {"t": "noun", "fr": "le loisir", "en": "leisure activity", "zh": "业余爱好", "g": "m", "lvl": "A2", "dom": "休闲与运动", "trap": false, "neu": "Son principal loisir, c'est la photographie.", "neuzh": "他最主要的爱好是摄影。", "id": "noun:le loisir"}, {"t": "noun", "fr": "le sac", "en": "bag", "zh": "包", "g": "m", "lvl": "A1", "dom": "日常物品", "trap": false, "neu": "J'ai laissé mon sac dans la voiture.", "neuzh": "我把包落在车里了。", "id": "noun:le sac"}, {"t": "noun", "fr": "le téléphone", "en": "telephone", "zh": "电话", "g": "m", "lvl": "A1", "dom": "日常物品", "trap": false, "neu": "Mon téléphone n'a plus de batterie.", "neuzh": "我手机没电了。", "id": "noun:le téléphone"}, {"t": "noun", "fr": "la montre", "en": "watch", "zh": "手表", "g": "f", "lvl": "A1", "dom": "日常物品", "trap": false, "neu": "Sa montre retarde de cinq minutes.", "neuzh": "他的表慢了五分钟。", "id": "noun:la montre"}, {"t": "noun", "fr": "le portefeuille", "en": "wallet", "zh": "钱包", "g": "m", "lvl": "A2", "dom": "日常物品", "trap": false, "neu": "Il a oublié son portefeuille à l'hôtel.", "neuzh": "他把钱包忘在酒店了。", "id": "noun:le portefeuille"}, {"t": "noun", "fr": "le métier", "en": "profession", "zh": "职业", "g": "m", "lvl": "A1", "dom": "职业与工作", "trap": false, "neu": "Pilote, c'est un métier dangereux.", "neuzh": "车手是个危险的职业。", "id": "noun:le métier"}, {"t": "noun", "fr": "le bureau", "en": "office; desk", "zh": "办公室；书桌", "g": "m", "lvl": "A1", "dom": "职业与工作", "trap": false, "neu": "Le bureau du directeur est au premier étage.", "neuzh": "经理办公室在二楼。", "id": "noun:le bureau"}, {"t": "noun", "fr": "la réunion", "en": "meeting", "zh": "会议", "g": "f", "lvl": "A2", "dom": "职业与工作", "trap": false, "neu": "La réunion d'équipe commence à huit heures.", "neuzh": "车队会议八点开始。", "id": "noun:la réunion"}, {"t": "noun", "fr": "le contrat", "en": "contract", "zh": "合同", "g": "m", "lvl": "B1", "dom": "职业与工作", "trap": false, "neu": "Son contrat se termine en fin de saison.", "neuzh": "他的合同赛季末到期。", "id": "noun:le contrat"}, {"t": "noun", "fr": "le kilo", "en": "kilo", "zh": "公斤", "g": "m", "lvl": "A1", "dom": "重量与计量", "trap": false, "neu": "La monoplace pèse sept cent soixante-huit kilos.", "neuzh": "这台赛车重七百六十八公斤。", "id": "noun:le kilo"}, {"t": "noun", "fr": "le mètre", "en": "metre", "zh": "米", "g": "m", "lvl": "A1", "dom": "重量与计量", "trap": false, "neu": "La ligne droite fait mille mètres.", "neuzh": "这条直道有一千米。", "id": "noun:le mètre"}, {"t": "noun", "fr": "le poids", "en": "weight", "zh": "重量", "g": "m", "lvl": "A2", "dom": "重量与计量", "trap": false, "neu": "Le poids minimum baisse cette année.", "neuzh": "今年的最低重量降低了。", "id": "noun:le poids"}, {"t": "noun", "fr": "l'ingénieur", "en": "engineer", "zh": "工程师", "g": "m", "lvl": "A2", "dom": "专业词汇", "trap": true, "neu": "L'ingénieur analyse les données après la séance.", "neuzh": "工程师在这一节之后分析数据。", "id": "noun:l'ingénieur"}, {"t": "noun", "fr": "le moteur", "en": "engine", "zh": "发动机", "g": "m", "lvl": "A2", "dom": "专业词汇", "trap": false, "neu": "Le moteur thermique fournit la moitié de la puissance.", "neuzh": "内燃机提供一半的动力。", "id": "noun:le moteur"}, {"t": "noun", "fr": "le symptôme", "en": "symptom", "zh": "症状", "g": "m", "lvl": "B2", "dom": "专业词汇", "trap": false, "neu": "Le médecin note plusieurs symptômes inquiétants.", "neuzh": "医生记录了几个令人担心的症状。", "id": "noun:le symptôme"}, {"t": "noun", "fr": "le tribunal", "en": "court", "zh": "法庭", "g": "m", "lvl": "B2", "dom": "专业词汇", "trap": false, "neu": "L'affaire sera jugée par un tribunal international.", "neuzh": "这个案子将由国际法庭审理。", "id": "noun:le tribunal"}], "sentences": {"noun:le monde": {"fr": "{P} est connu dans le monde entier.", "zh": "{P}闻名全世界。"}, "noun:le temps": {"fr": "Le temps change vite à Spa.", "zh": "斯帕的天气变化很快。"}, "noun:l'année": {"fr": "Cette année, {T} a changé de moteur.", "zh": "今年{T}换了引擎。"}, "noun:le travail": {"fr": "Le travail des mécaniciens impressionne {P}.", "zh": "技师们的工作让{P}印象深刻。"}, "noun:la main": {"fr": "{P} lève la main pour saluer le public.", "zh": "{P}举手向观众致意。"}, "noun:l'eau": {"fr": "Il y a de l'eau sur la piste au virage six.", "zh": "六号弯的赛道上有积水。"}, "noun:le pays": {"fr": "{P} rentre dans son pays après la course.", "zh": "{P}赛后回自己的国家。"}, "noun:la ville": {"fr": "Chaque ville organise une parade des pilotes.", "zh": "每座城市都会办一场车手巡游。"}, "noun:le jour": {"fr": "C'est le grand jour pour {P}.", "zh": "对{P}来说这是个大日子。"}, "noun:la nuit": {"fr": "Les ingénieurs de {T} travaillent toute la nuit.", "zh": "{T}的工程师们整夜工作。"}, "noun:l'heure": {"fr": "La course dure presque deux heures.", "zh": "比赛持续将近两个小时。"}, "noun:la fin": {"fr": "À la fin de la course, {P} est deuxième.", "zh": "比赛结束时{P}排第二。"}, "noun:le début": {"fr": "Au début du tour, {P} perd du temps.", "zh": "在这一圈的开头{P}丢了时间。"}, "noun:la place": {"fr": "{P} gagne trois places au départ.", "zh": "{P}在起步时前进了三个位次。"}, "noun:le prix": {"fr": "Le Grand Prix de Monaco reste le plus prestigieux.", "zh": "摩纳哥大奖赛仍是最具声望的一场。"}, "noun:la question": {"fr": "Un journaliste pose une question gênante à {P}.", "zh": "一名记者问了{P}一个尴尬的问题。"}, "noun:la réponse": {"fr": "La réponse de {P} est courte et sèche.", "zh": "{P}的回答简短而生硬。"}, "noun:le départ": {"fr": "Le départ est donné à quinze heures.", "zh": "比赛在下午三点发车。"}, "noun:l'arrivée": {"fr": "À l'arrivée, {P} salue son équipe à la radio.", "zh": "冲线时{P}在无线电里向车队致意。"}, "noun:la semaine": {"fr": "La semaine prochaine, il y a deux courses.", "zh": "下周有两场比赛。"}, "noun:le mois": {"fr": "Le mois de juillet est très chargé.", "zh": "七月的赛程非常密集。"}, "noun:le choix": {"fr": "Le choix des pneus de {T} surprend tout le monde.", "zh": "{T}的轮胎选择让所有人意外。"}, "noun:la raison": {"fr": "La raison de l'abandon de {P} reste inconnue.", "zh": "{P}退赛的原因仍然不明。"}, "noun:le problème": {"fr": "{P} signale un problème de moteur à la radio.", "zh": "{P}在无线电里报告引擎出了问题。"}, "noun:le système": {"fr": "Le système hybride de 2026 est très complexe.", "zh": "2026 年的混合动力系统非常复杂。"}, "noun:le programme": {"fr": "Le programme de {T} change à cause de la pluie.", "zh": "{T}的日程因为下雨改了。"}, "noun:le groupe": {"fr": "{P} rejoint le groupe de tête au dixième tour.", "zh": "{P}在第十圈追上了领先集团。"}, "noun:le musée": {"fr": "Le musée de {T} expose ses anciennes monoplaces.", "zh": "{T}的博物馆展出它的老赛车。"}, "noun:la page": {"fr": "{P} tourne la page après un week-end difficile.", "zh": "艰难的一个周末后，{P}翻过了这一页。"}, "noun:le silence": {"fr": "Un silence pesant suit l'accident de {P}.", "zh": "{P}的事故之后是一片沉重的寂静。"}, "noun:le courage": {"fr": "Il faut du courage pour attaquer dans ce virage.", "zh": "在这个弯道进攻需要勇气。"}, "noun:la peur": {"fr": "{P} n'a pas peur de partir en pneus pluie.", "zh": "{P}不怕用雨胎起步。"}, "noun:la voix": {"fr": "La voix de {P} tremble à la radio.", "zh": "{P}在无线电里声音发抖。"}, "noun:le bruit": {"fr": "Le bruit des nouveaux moteurs déçoit les fans.", "zh": "新引擎的声浪让车迷失望。"}, "noun:la vitesse": {"fr": "La vitesse de pointe de {T} impressionne.", "zh": "{T}的极速很惊人。"}, "noun:le retard": {"fr": "{P} compte deux secondes de retard sur {P2}.", "zh": "{P}落后{P2}两秒。"}, "noun:le tour": {"fr": "{P} signe le meilleur tour de la course.", "zh": "{P}做出了全场最快圈速。"}, "noun:la tête": {"fr": "{T} est en tête du championnat des constructeurs.", "zh": "{T}领跑车队积分榜。"}, "noun:le niveau": {"fr": "Le niveau de {P2} a beaucoup monté cette saison.", "zh": "{P2}这个赛季水平提高了很多。"}, "noun:le résultat": {"fr": "Le résultat est meilleur que prévu pour {T}.", "zh": "对{T}来说结果比预期更好。"}, "noun:la décision": {"fr": "La décision des commissaires pénalise {P}.", "zh": "赛会的裁决处罚了{P}。"}, "noun:le but": {"fr": "Le but de {T} cette saison, c'est le podium.", "zh": "{T}这个赛季的目标是领奖台。"}, "noun:le champion": {"fr": "Le champion du monde part en première ligne.", "zh": "世界冠军从第一排发车。"}, "noun:la saison": {"fr": "La saison 2026 compte vingt-deux pilotes.", "zh": "2026 赛季有二十二名车手。"}, "noun:le titre": {"fr": "Le titre se joue au dernier Grand Prix.", "zh": "冠军要在最后一场大奖赛决出。"}, "noun:l'essai": {"fr": "Les essais libres commencent vendredi matin.", "zh": "自由练习赛周五上午开始。"}, "noun:le podium": {"fr": "{P} monte sur le podium pour la première fois.", "zh": "{P}第一次登上领奖台。"}, "noun:le drapeau": {"fr": "Le drapeau rouge interrompt la séance.", "zh": "红旗中断了这一节。"}, "noun:la météo": {"fr": "La météo annonce de la pluie sur le circuit.", "zh": "天气预报说赛道会下雨。"}, "noun:le virage": {"fr": "{P} freine très tard dans le dernier virage.", "zh": "{P}在最后一个弯道刹车很晚。"}, "noun:la victoire": {"fr": "Cette victoire relance la saison de {T}.", "zh": "这场胜利让{T}的赛季重新燃起希望。"}, "noun:le pneu": {"fr": "Les pneus tendres s'usent plus vite ici.", "zh": "软胎在这里磨损更快。"}, "noun:la piste": {"fr": "La piste reste mouillée après l'averse.", "zh": "阵雨过后赛道仍然是湿的。"}, "noun:le casque": {"fr": "{P} ajuste son casque avant de monter en voiture.", "zh": "{P}上车前调整头盔。"}, "noun:la voiture": {"fr": "La voiture de {P} est plus rapide qu'hier.", "zh": "{P}的车比昨天更快。"}, "noun:la course": {"fr": "La course commence dans une heure.", "zh": "比赛一小时后开始。"}, "noun:le pilote": {"fr": "{P} est un pilote très régulier.", "zh": "{P}是一位非常稳定的车手。"}, "noun:l'équipe": {"fr": "Toute l'équipe applaudit dans les stands.", "zh": "整个车队在维修区鼓掌。"}, "noun:l'espoir": {"fr": "L'espoir du titre revient chez {T}.", "zh": "{T}夺冠的希望又回来了。"}, "noun:la défaite": {"fr": "Cette défaite est dure à accepter pour {P}.", "zh": "这场失利对{P}来说很难接受。"}, "noun:la réussite": {"fr": "La réussite de {P} vient d'un travail énorme.", "zh": "{P}的成功来自巨大的付出。"}, "noun:l'échec": {"fr": "L'échec de la stratégie coûte cher à {T}.", "zh": "策略的失败让{T}代价惨重。"}, "noun:l'avance": {"fr": "{P} garde trois secondes d'avance sur {P2}.", "zh": "{P}对{P2}保持三秒领先。"}, "noun:la hausse": {"fr": "On observe une hausse de la température de piste.", "zh": "赛道温度在上升。"}, "noun:la baisse": {"fr": "Une baisse de performance inquiète {T}.", "zh": "性能下降让{T}担心。"}, "noun:le règlement": {"fr": "Le règlement technique de 2026 supprime le DRS.", "zh": "2026 年的技术规则取消了 DRS。"}, "noun:la pénalité": {"fr": "Une pénalité de cinq secondes frappe {P}.", "zh": "{P}被判罚五秒。"}, "noun:l'amende": {"fr": "{T} reçoit une amende pour un arrêt dangereux.", "zh": "{T}因危险放车被罚款。"}, "noun:la pression": {"fr": "La pression monte sur {P} avant la dernière manche.", "zh": "最后一站之前{P}的压力在上升。"}, "noun:le manque": {"fr": "Le manque d'adhérence gêne {P} depuis vendredi.", "zh": "从周五起抓地力不足就困扰着{P}。"}, "noun:la confiance": {"fr": "{P} retrouve confiance dans sa monoplace.", "zh": "{P}重新找回了对赛车的信心。"}, "noun:le doute": {"fr": "Il n'y a aucun doute sur le talent de {P2}.", "zh": "{P2}的天赋毫无疑问。"}, "noun:la déception": {"fr": "La déception se lit sur le visage de {P}.", "zh": "失望写在{P}脸上。"}, "noun:l'écart": {"fr": "L'écart entre {T} et ses rivaux se réduit.", "zh": "{T}和对手的差距在缩小。"}, "noun:le dépassement": {"fr": "Ce dépassement de {P} restera dans les mémoires.", "zh": "{P}的这次超车会被人们记住。"}, "noun:la stratégie": {"fr": "La stratégie à un arrêt sauve la course de {P}.", "zh": "一停策略救了{P}的比赛。"}, "noun:la foule": {"fr": "La foule se lève quand {P} franchit la ligne.", "zh": "{P}冲线时人群全都站了起来。"}, "noun:la panne": {"fr": "Une panne hydraulique oblige {P} à abandonner.", "zh": "液压故障迫使{P}退赛。"}, "noun:l'écurie": {"fr": "L'écurie engage deux pilotes par Grand Prix.", "zh": "每场大奖赛车队派出两名车手。"}, "noun:le constructeur": {"fr": "Le championnat des constructeurs reste très serré.", "zh": "车队积分榜竞争依然非常激烈。"}, "noun:la monoplace": {"fr": "La monoplace de 2026 pèse trente kilos de moins.", "zh": "2026 年的赛车轻了三十公斤。"}, "noun:le carburant": {"fr": "Le carburant est désormais cent pour cent durable.", "zh": "燃料现在是百分之百可持续的。"}, "noun:la fierté": {"fr": "La fierté de {T} se voit dans le garage.", "zh": "{T}的自豪感在车库里一目了然。"}, "noun:le soulagement": {"fr": "Après l'arrivée, c'est le soulagement pour {P}.", "zh": "冲线之后，{P}如释重负。"}, "noun:l'enjeu": {"fr": "L'enjeu de ce week-end est énorme pour {T}.", "zh": "这个周末对{T}的利害关系极大。"}, "noun:l'exigence": {"fr": "L'exigence du directeur d'écurie est connue.", "zh": "领队的高标准是出了名的。"}, "noun:le ravitaillement": {"fr": "Le ravitaillement de {P} n'a duré que deux secondes.", "zh": "{P}的进站只用了两秒。"}, "noun:la remise en question": {"fr": "Cette saison impose une remise en question à {T}.", "zh": "这个赛季迫使{T}彻底反思。"}, "noun:l'aboutissement": {"fr": "Ce titre est l'aboutissement de dix ans de travail.", "zh": "这个冠军是十年努力的结果。"}, "noun:le constat": {"fr": "Le constat est clair : {T} manque de rythme.", "zh": "结论很清楚：{T}速度不够。"}, "verb:gagner": {"fr": "{P} veut gagner le championnat cette année.", "zh": "{P}今年想赢得总冠军。"}, "verb:finir": {"fr": "{P} et {P2} finissent la course sur le podium.", "zh": "{P}和{P2}都在领奖台上结束了比赛。"}, "verb:aller": {"fr": "Nous allons au circuit en train.", "zh": "我们坐火车去赛道。"}, "verb:faire": {"fr": "{P} fait un tour presque parfait.", "zh": "{P}跑出了几乎完美的一圈。"}, "verb:pouvoir": {"fr": "{P} peut encore gagner le titre.", "zh": "{P}还能赢得冠军。"}, "verb:vouloir": {"fr": "Les fans veulent voir des dépassements.", "zh": "车迷想看到超车。"}, "verb:devoir": {"fr": "{P} doit changer de pneus maintenant.", "zh": "{P}现在必须换胎。"}, "verb:savoir": {"fr": "Personne ne sait qui va gagner dimanche.", "zh": "没人知道周日谁会赢。"}, "verb:venir": {"fr": "Les fans viennent de toute l'Europe.", "zh": "车迷从欧洲各地赶来。"}, "verb:voir": {"fr": "On voit très mal sous la pluie.", "zh": "雨中视线非常差。"}, "verb:mettre": {"fr": "{P} met son casque et monte en voiture.", "zh": "{P}戴上头盔上了车。"}, "verb:dire": {"fr": "{P} dit que la voiture est difficile à piloter.", "zh": "{P}说这台车很难开。"}, "verb:prendre": {"fr": "{P} prend la tête dès le premier tour.", "zh": "{P}第一圈就取得领先。"}, "verb:partir": {"fr": "{P} part de la cinquième place sur la grille.", "zh": "{P}从发车位第五位起步。"}, "verb:sortir": {"fr": "La voiture de {P} sort de la piste au virage trois.", "zh": "{P}的车在三号弯冲出赛道。"}, "verb:dormir": {"fr": "Les mécaniciens dorment très peu ce week-end.", "zh": "技师们这个周末睡得很少。"}, "verb:écrire": {"fr": "Les journalistes écrivent leurs articles après la course.", "zh": "记者在赛后写稿。"}, "verb:lire": {"fr": "L'ingénieur lit les données de télémétrie.", "zh": "工程师在读遥测数据。"}, "verb:boire": {"fr": "{P} boit beaucoup d'eau avant le départ.", "zh": "{P}发车前喝很多水。"}, "verb:croire": {"fr": "Chez {T}, on croit encore au titre.", "zh": "{T}内部依然相信能夺冠。"}, "verb:connaître": {"fr": "{P} connaît ce circuit par cœur.", "zh": "{P}对这条赛道了如指掌。"}, "verb:attendre": {"fr": "Les fans attendent {P} devant le paddock.", "zh": "车迷在围场外等{P}。"}, "verb:répondre": {"fr": "{P} répond calmement aux critiques.", "zh": "{P}冷静地回应批评。"}, "verb:perdre": {"fr": "{P} perd deux secondes dans les stands.", "zh": "{P}在维修区丢了两秒。"}, "verb:vendre": {"fr": "{T} vend des milliers de casquettes ce week-end.", "zh": "{T}这个周末卖出几千顶帽子。"}, "verb:choisir": {"fr": "{T} choisit les pneus durs pour le deuxième relais.", "zh": "{T}第二段选择了硬胎。"}, "verb:réussir": {"fr": "{P} réussit un dépassement magnifique sur {P2}.", "zh": "{P}对{P2}完成了一次漂亮的超车。"}, "verb:réfléchir": {"fr": "{T} réfléchit encore à sa stratégie.", "zh": "{T}还在考虑策略。"}, "verb:conduire": {"fr": "{P} conduit avec beaucoup de sang-froid.", "zh": "{P}开得非常沉着。"}, "verb:dépasser": {"fr": "{P} dépasse {P2} dans la ligne droite.", "zh": "{P}在直道上超过了{P2}。"}, "verb:courir": {"fr": "Les mécaniciens courent vers la voiture.", "zh": "技师们跑向赛车。"}, "verb:ouvrir": {"fr": "{P} ouvre sa visière après l'arrivée.", "zh": "冲线后{P}打开了面罩。"}, "verb:offrir": {"fr": "Cette victoire offre un immense espoir à {T}.", "zh": "这场胜利给{T}带来了巨大希望。"}, "verb:recevoir": {"fr": "{P} reçoit une pénalité après la course.", "zh": "{P}在赛后被判罚。"}, "verb:devenir": {"fr": "{P} devient champion du monde à Abou Dabi.", "zh": "{P}在阿布扎比成为世界冠军。"}, "verb:tenir": {"fr": "{P} tient son volant très fermement.", "zh": "{P}紧紧握着方向盘。"}, "verb:obtenir": {"fr": "{P} obtient son premier podium en carrière.", "zh": "{P}拿到了职业生涯第一个领奖台。"}, "verb:vivre": {"fr": "Beaucoup de pilotes vivent à Monaco.", "zh": "很多车手住在摩纳哥。"}, "verb:suivre": {"fr": "Je suis la course à la télévision.", "zh": "我在电视上看比赛。"}, "verb:appeler": {"fr": "L'ingénieur appelle {P} à la radio.", "zh": "工程师通过无线电呼叫{P}。"}, "verb:acheter": {"fr": "J'achète un billet pour le Grand Prix.", "zh": "我买了一张大奖赛的门票。"}, "verb:préférer": {"fr": "{P} préfère les circuits rapides.", "zh": "{P}更喜欢高速赛道。"}, "verb:essayer": {"fr": "{T} essaie une nouvelle aile arrière.", "zh": "{T}试了一个新尾翼。"}, "verb:envoyer": {"fr": "{T} envoie un message à {P} à la radio.", "zh": "{T}通过无线电给{P}发了条消息。"}, "verb:commencer": {"fr": "Nous commençons la séance sous la pluie.", "zh": "我们在雨中开始这一节。"}, "verb:manger": {"fr": "Nous mangeons avant les qualifications.", "zh": "我们在排位赛前吃饭。"}, "verb:jeter": {"fr": "{P} jette un œil aux écrans du stand.", "zh": "{P}看了一眼维修区的屏幕。"}, "verb:battre": {"fr": "{P} bat le record du circuit en qualification.", "zh": "{P}在排位赛打破了赛道纪录。"}, "verb:atteindre": {"fr": "Les monoplaces atteignent plus de trois cents kilomètres-heure.", "zh": "赛车速度超过每小时三百公里。"}, "verb:craindre": {"fr": "{T} craint une averse en fin de course.", "zh": "{T}担心比赛末段下阵雨。"}, "verb:rejoindre": {"fr": "{P} rejoint {P2} en quelques tours.", "zh": "{P}几圈之内就追上了{P2}。"}, "verb:résoudre": {"fr": "Les ingénieurs résolvent le problème en une nuit.", "zh": "工程师们一夜之间解决了问题。"}, "verb:convaincre": {"fr": "La performance de {P} convainc tout le paddock.", "zh": "{P}的表现说服了整个围场。"}, "verb:se plaindre": {"fr": "{P} se plaint du manque d'adhérence.", "zh": "{P}抱怨抓地力不足。"}, "verb:décevoir": {"fr": "Ce résultat déçoit les supporters de {T}.", "zh": "这个结果让{T}的支持者失望。"}, "verb:parvenir": {"fr": "{P} parvient à garder sa place jusqu'au bout.", "zh": "{P}成功守住位置直到最后。"}, "adj:rapide": {"fr": "Un pilote rapide. Une voiture rapide.", "zh": "一位快的车手。一辆快的车。"}, "adj:bon": {"fr": "Un bon départ. Une bonne stratégie.", "zh": "一个好起步。一个好策略。"}, "adj:beau": {"fr": "Un beau dépassement. Une belle victoire.", "zh": "一次漂亮的超车。一场漂亮的胜利。"}, "adj:nouveau": {"fr": "Un nouveau moteur. Une nouvelle écurie.", "zh": "一台新引擎。一支新车队。"}, "adj:vieux": {"fr": "Un vieux circuit. Une vieille rivalité.", "zh": "一条老赛道。一段老恩怨。"}, "adj:gros": {"fr": "Un gros accident. Une grosse erreur.", "zh": "一场大事故。一个大失误。"}, "adj:long": {"fr": "Un long week-end. Une longue ligne droite.", "zh": "漫长的一个周末。一条长长的直道。"}, "adj:premier": {"fr": "Son premier titre. Sa première victoire.", "zh": "他的第一个冠军。他的第一场胜利。"}, "adj:cher": {"fr": "Un moteur cher. Une erreur chère.", "zh": "一台很贵的引擎。一个代价高昂的错误。"}, "adj:gentil": {"fr": "Un geste gentil. Une remarque gentille.", "zh": "一个友善的举动。一句友善的话。"}, "adj:heureux": {"fr": "Les fans sont heureux. L'équipe est heureuse.", "zh": "车迷们很开心。车队很开心。"}, "adj:sérieux": {"fr": "Un problème sérieux. Une discussion sérieuse.", "zh": "一个严重的问题。一次严肃的讨论。"}, "adj:nerveux": {"fr": "Un départ nerveux. Une attente nerveuse.", "zh": "一次紧张的起步。一段紧张的等待。"}, "adj:actif": {"fr": "Un rôle actif. Une participation active.", "zh": "一个积极的角色。积极的参与。"}, "adj:sportif": {"fr": "Le directeur sportif. La voiture sportive.", "zh": "运动总监。运动型汽车。"}, "adj:neuf": {"fr": "Un pneu neuf. Une monoplace neuve.", "zh": "一条新胎。一台全新赛车。"}, "adj:blanc": {"fr": "Un casque blanc. Une combinaison blanche.", "zh": "一个白头盔。一件白色赛服。"}, "adj:sec": {"fr": "Un circuit sec. Une piste sèche.", "zh": "一条干赛道。干燥的赛道。"}, "adj:public": {"fr": "Un message public. Une excuse publique.", "zh": "一条公开信息。一次公开道歉。"}, "adj:fier": {"fr": "Un pilote fier. Une équipe fière.", "zh": "一位自豪的车手。一支自豪的车队。"}, "adj:doux": {"fr": "Un freinage doux. Une température douce.", "zh": "柔和的刹车。温和的气温。"}, "adj:faux": {"fr": "Un faux départ. Une fausse information.", "zh": "起步违规。一条假消息。"}, "adj:franc": {"fr": "Un avis franc. Une discussion franche.", "zh": "坦率的意见。一次坦率的谈话。"}, "adj:inquiet": {"fr": "Un ingénieur inquiet. Une écurie inquiète.", "zh": "一位担心的工程师。一支忧心的车队。"}, "adj:complet": {"fr": "Un échec complet. Une analyse complète.", "zh": "彻底的失败。完整的分析。"}, "adj:discret": {"fr": "Un pilote discret. Une arrivée discrète.", "zh": "一位低调的车手。一次低调的抵达。"}, "adj:ancien": {"fr": "Un ancien champion. Une ancienne rivalité.", "zh": "一位前世界冠军。一段旧日的恩怨。"}, "adj:bas": {"fr": "Un appui bas. Une vitesse basse.", "zh": "低下压力。低速。"}, "adj:frais": {"fr": "Un pneu frais. Une piste fraîche.", "zh": "一条新胎。凉的赛道。"}, "adj:meilleur": {"fr": "Un meilleur résultat. Une meilleure stratégie.", "zh": "更好的结果。更好的策略。"}, "adj:régulier": {"fr": "Un rythme régulier. Une performance régulière.", "zh": "稳定的节奏。稳定的表现。"}, "adj:puissant": {"fr": "Un moteur puissant. Une écurie puissante.", "zh": "强劲的引擎。强大的车队。"}, "adj:prudent": {"fr": "Un premier tour prudent. Une approche prudente.", "zh": "谨慎的第一圈。谨慎的处理方式。"}, "adj:fou": {"fr": "Un week-end fou. Une course folle.", "zh": "疯狂的一个周末。疯狂的一场比赛。"}, "adj:mou": {"fr": "Un freinage mou. Une réaction molle.", "zh": "软绵绵的刹车。无力的反应。"}, "adj:épais": {"fr": "Un brouillard épais. Une fumée épaisse.", "zh": "浓雾。浓烟。"}, "ff:actuellement": {"fr": "Actuellement, {T} est en tête du classement.", "zh": "目前{T}领跑积分榜。"}, "ff:éventuellement": {"fr": "{P} changera éventuellement de pneus au vingtième tour.", "zh": "必要时{P}会在第二十圈换胎。"}, "ff:assister à": {"fr": "J'ai assisté à ce Grand Prix l'année dernière.", "zh": "去年我现场看了这场大奖赛。"}, "ff:attendre": {"fr": "Nous attendons la décision des commissaires.", "zh": "我们在等赛会的裁决。"}, "ff:demander": {"fr": "{P} demande plus d'informations à la radio.", "zh": "{P}在无线电里要求更多信息。"}, "ff:rester": {"fr": "{P} reste calme malgré la pression.", "zh": "尽管有压力{P}依然冷静。"}, "ff:sensible": {"fr": "Cette monoplace est très sensible au vent.", "zh": "这台赛车对风非常敏感。"}, "ff:la librairie": {"fr": "Il achète un livre sur la Formule 1 dans une librairie.", "zh": "他在一家书店买了一本关于一级方程式的书。"}, "ff:la journée": {"fr": "La journée de vendredi est très longue pour les équipes.", "zh": "对车队来说周五这一整天非常漫长。"}, "ff:la figure": {"fr": "La figure de {P} montre la fatigue.", "zh": "{P}的脸上写着疲惫。"}, "ff:la location": {"fr": "La location d'une voiture coûte cher pendant le Grand Prix.", "zh": "大奖赛期间租车很贵。"}, "ff:la monnaie": {"fr": "Je n'ai pas de monnaie pour le parking du circuit.", "zh": "我没有零钱付赛道停车费。"}, "ff:passer un examen": {"fr": "Je passe le TCF le mois prochain.", "zh": "我下个月考 TCF。"}, "ff:supporter": {"fr": "{P} supporte mal la chaleur de Singapour.", "zh": "{P}很不适应新加坡的高温。"}, "ff:blesser": {"fr": "L'accident a blessé un mécanicien dans la voie des stands.", "zh": "事故让维修区的一名技师受伤。"}, "ff:le caractère": {"fr": "{P} a un caractère très calme.", "zh": "{P}性格非常冷静。"}, "ff:l'envie": {"fr": "{P} a envie de gagner devant son public.", "zh": "{P}很想在主场观众面前获胜。"}, "ff:formidable": {"fr": "C'est une performance formidable de {P}.", "zh": "这是{P}一场了不起的表现。"}, "ff:ignorer": {"fr": "{P} ignore encore sa position exacte au classement.", "zh": "{P}还不知道自己在榜上的确切位置。"}, "ff:important": {"fr": "Un écart important sépare les deux écuries.", "zh": "两支车队之间有很大的差距。"}, "ff:large": {"fr": "La ligne droite est très large à cet endroit.", "zh": "这一段的直道非常宽。"}, "ff:le magasin": {"fr": "Le magasin de {T} vend des casquettes et des tee-shirts.", "zh": "{T}的商店卖帽子和 T 恤。"}, "ff:prétendre": {"fr": "{P} prétend n'avoir rien vu dans son rétroviseur.", "zh": "{P}声称后视镜里什么都没看到。"}, "ff:quitter": {"fr": "{P} quitte le circuit après la conférence de presse.", "zh": "新闻发布会后{P}离开了赛道。"}, "ff:sympathique": {"fr": "{P} est un pilote très sympathique avec les fans.", "zh": "{P}对车迷非常友好。"}, "ff:l'avertissement": {"fr": "{P} reçoit un avertissement pour avoir gêné un concurrent.", "zh": "{P}因阻挡对手收到一次警告。"}, "ff:le raisin": {"fr": "Il mange du raisin avant de monter en voiture.", "zh": "他上车前吃葡萄。"}, "ff:le pain": {"fr": "Les pilotes prennent du pain au petit déjeuner.", "zh": "车手们早餐吃面包。"}, "ff:rude": {"fr": "C'est une saison rude pour {T}.", "zh": "对{T}来说这是个艰苦的赛季。"}, "ff:la chance": {"fr": "{P} a de la chance : la pluie s'arrête juste avant le départ.", "zh": "{P}运气不错：雨正好在发车前停了。"}, "ff:réaliser": {"fr": "{P} réalise le meilleur temps de la séance.", "zh": "{P}做出了本节最快时间。"}, "conn:cependant": {"fr": "La voiture est rapide ; cependant, elle use trop ses pneus.", "zh": "车很快；然而它太吃胎。"}, "conn:pourtant": {"fr": "{P} est parti en pole ; pourtant, il a fini quatrième.", "zh": "{P}从杆位起步；可是他只拿到第四。"}, "conn:néanmoins": {"fr": "Le résultat déçoit ; néanmoins, le rythme était bon.", "zh": "结果令人失望；尽管如此，节奏还不错。"}, "conn:désormais": {"fr": "Désormais, tout se jouera sur la fiabilité.", "zh": "从现在起，一切取决于可靠性。"}, "conn:d'ailleurs": {"fr": "{P} connaît bien ce circuit ; d'ailleurs, il y a déjà gagné.", "zh": "{P}很熟这条赛道；而且他在这里赢过。"}, "conn:en revanche": {"fr": "Le premier secteur était bon ; en revanche, le deuxième était lent.", "zh": "第一段不错；相反，第二段很慢。"}, "conn:toutefois": {"fr": "Toutefois, rien n'est encore décidé au championnat.", "zh": "不过，总冠军还远没有定论。"}, "conn:en effet": {"fr": "En effet, la stratégie à un arrêt était la bonne.", "zh": "的确，一停策略是对的。"}, "conn:afin de": {"fr": "{P} ralentit afin de protéger ses pneus.", "zh": "{P}放慢速度以保护轮胎。"}, "conn:malgré": {"fr": "Malgré la pluie, {P} garde la tête de la course.", "zh": "尽管下雨，{P}仍保持领先。"}, "conn:grâce à": {"fr": "Grâce à un arrêt parfait, {P} reprend la tête.", "zh": "多亏一次完美进站，{P}重夺领先。"}, "conn:dès que": {"fr": "Dès que la piste sèche, {P} attaque.", "zh": "赛道一干{P}就进攻。"}, "conn:tandis que": {"fr": "{P} attaque, tandis que {P2} gère ses pneus.", "zh": "{P}在进攻，而{P2}在管理轮胎。"}, "conn:bien que": {"fr": "Bien qu'il soit fatigué, {P} continue d'attaquer.", "zh": "虽然很累，{P}仍继续进攻。"}, "conn:alors que": {"fr": "{P} a abandonné, alors qu'il était deuxième.", "zh": "{P}退赛了，而当时他排第二。"}, "conn:au fur et à mesure": {"fr": "Au fur et à mesure, l'écart se réduit.", "zh": "差距在逐渐缩小。"}, "conn:par ailleurs": {"fr": "Par ailleurs, le règlement changera encore en 2027.", "zh": "另外，规则在 2027 年还会再改。"}, "conn:voire": {"fr": "Le podium est possible, voire probable.", "zh": "领奖台是可能的，甚至是很有希望的。"}, "conn:quoique": {"fr": "Quoique prudent, {P} reste très rapide.", "zh": "虽然谨慎，{P}依然非常快。"}, "conn:puisque": {"fr": "Puisque la piste est mouillée, {T} monte les pneus pluie.", "zh": "既然赛道是湿的，{T}就装上雨胎。"}, "conn:plutôt": {"fr": "{P} est plutôt satisfait de sa course.", "zh": "{P}对自己的比赛还算满意。"}, "conn:environ": {"fr": "La course dure environ une heure et demie.", "zh": "比赛大约持续一个半小时。"}, "conn:davantage": {"fr": "Il faut davantage d'appui aérodynamique ici.", "zh": "这里需要更多的空气动力学下压力。"}, "conn:en dépit de": {"fr": "En dépit des critiques, {T} garde sa stratégie.", "zh": "尽管有批评，{T}仍坚持策略。"}, "conn:dans la mesure où": {"fr": "Dans la mesure où la météo le permet, {T} fera un essai.", "zh": "只要天气允许，{T}就会做一次测试。"}, "noun:l'été": {"fr": "En été, la chaleur rend les courses très dures.", "zh": "夏天的高温让比赛非常难熬。"}, "noun:l'hiver": {"fr": "L'hiver, les équipes préparent la monoplace de la saison suivante.", "zh": "冬天车队在准备下个赛季的赛车。"}, "noun:la fête": {"fr": "Après le titre, la fête dure toute la nuit chez {T}.", "zh": "夺冠之后，{T}庆祝了一整夜。"}, "noun:le week-end": {"fr": "Ce week-end, il y a trois séances d'essais.", "zh": "这个周末有三节练习赛。"}, "noun:le nom": {"fr": "Le nom de {P} apparaît en haut du classement.", "zh": "{P}的名字出现在积分榜最上方。"}, "noun:la langue": {"fr": "{P} donne ses interviews en trois langues.", "zh": "{P}用三种语言接受采访。"}, "noun:l'étranger": {"fr": "{P} court à l'étranger presque toute l'année.", "zh": "{P}几乎全年都在国外比赛。"}, "noun:le collègue": {"fr": "Un collègue de {P} lui explique les réglages.", "zh": "{P}的一位同事向他解释调校。"}, "noun:l'avion": {"fr": "L'équipe prend l'avion dès le lundi matin.", "zh": "车队周一早上就乘飞机离开。"}, "noun:le billet": {"fr": "Les billets pour ce Grand Prix sont déjà épuisés.", "zh": "这场大奖赛的门票已经售罄。"}, "noun:le voyage": {"fr": "Le voyage entre deux courses est épuisant.", "zh": "两场比赛之间的旅途让人精疲力竭。"}, "noun:la valise": {"fr": "{P} vit avec une valise onze mois par an.", "zh": "{P}一年有十一个月在拎着行李箱过日子。"}, "noun:l'hôtel": {"fr": "L'hôtel de l'équipe se trouve à côté du circuit.", "zh": "车队的酒店就在赛道旁边。"}, "noun:la chambre": {"fr": "{P} regarde les données depuis sa chambre d'hôtel.", "zh": "{P}在酒店房间里看数据。"}, "noun:la rue": {"fr": "Le circuit emprunte les rues de la ville.", "zh": "赛道借用了城市的街道。"}, "noun:le repas": {"fr": "Le repas d'avant-course est toujours léger.", "zh": "赛前那一餐总是很清淡。"}, "noun:le goût": {"fr": "Le champagne du podium a un goût particulier.", "zh": "领奖台上的香槟味道很特别。"}, "noun:la chaussure": {"fr": "Les chaussures de pilote résistent au feu.", "zh": "车手的赛车鞋是防火的。"}, "noun:le vent": {"fr": "Le vent de face coûte deux dixièmes à {P}.", "zh": "逆风让{P}损失了两个十分之一秒。"}, "noun:la neige": {"fr": "La neige a annulé les essais de février.", "zh": "大雪取消了二月的测试。"}, "noun:le nuage": {"fr": "Les nuages arrivent sur le circuit avant la course.", "zh": "比赛前乌云压到了赛道上空。"}, "noun:la chaleur": {"fr": "La chaleur dans le cockpit dépasse cinquante degrés.", "zh": "座舱里的温度超过五十度。"}, "noun:la santé": {"fr": "La santé des pilotes est suivie de très près.", "zh": "车手的健康受到密切监测。"}, "noun:le médecin": {"fr": "Le médecin du circuit arrive en quelques secondes.", "zh": "赛道医生几秒钟就赶到了。"}, "noun:la douleur": {"fr": "{P} pilote malgré la douleur au cou.", "zh": "{P}忍着脖子的疼痛继续驾驶。"}, "noun:la blessure": {"fr": "Sa blessure au poignet l'écarte de deux courses.", "zh": "手腕的伤让他缺席两场比赛。"}, "noun:la fatigue": {"fr": "La fatigue se voit sur le visage de {P}.", "zh": "疲惫写在{P}脸上。"}, "noun:le cours": {"fr": "{P} suit des cours d'italien pour son équipe.", "zh": "{P}为了车队在上意大利语课。"}, "noun:l'examen": {"fr": "Chaque Grand Prix est un examen pour la monoplace.", "zh": "每一场大奖赛都是对赛车的一次考验。"}, "noun:la note": {"fr": "La presse donne une mauvaise note à {T} ce week-end.", "zh": "媒体给了{T}这个周末一个差评。"}, "noun:le visage": {"fr": "Le visage de {P} ne montre aucune émotion.", "zh": "{P}脸上没有任何表情。"}, "noun:le sourire": {"fr": "Le sourire de {P} revient enfin sur le podium.", "zh": "{P}的笑容终于在领奖台上回来了。"}, "noun:la colère": {"fr": "La colère de {P} s'entend à la radio.", "zh": "{P}的愤怒在无线电里听得一清二楚。"}, "noun:la joie": {"fr": "La joie explose dans le garage de {T}.", "zh": "{T}的车库里爆发出欢呼。"}, "noun:la tristesse": {"fr": "Une grande tristesse suit l'annonce de son retrait.", "zh": "他宣布退出后是一片巨大的悲伤。"}, "noun:l'inquiétude": {"fr": "L'inquiétude grandit chez {T} après la panne.", "zh": "故障之后{T}的担忧在加深。"}, "noun:la surprise": {"fr": "La pole de {P} est la surprise du week-end.", "zh": "{P}拿到杆位是这个周末最大的意外。"}, "noun:la marque": {"fr": "Cette marque sponsorise {T} depuis dix ans.", "zh": "这个品牌赞助{T}已经十年了。"}, "noun:le style": {"fr": "Le style de pilotage de {P} est très agressif.", "zh": "{P}的驾驶风格非常激进。"}, "noun:la presse": {"fr": "La presse spécialisée critique la stratégie de {T}.", "zh": "专业媒体批评了{T}的策略。"}, "noun:le journal": {"fr": "Le journal consacre sa une à la victoire de {P}.", "zh": "报纸把头版给了{P}的胜利。"}, "noun:l'émission": {"fr": "L'émission d'après-course dure une heure.", "zh": "赛后节目有一个小时。"}, "noun:le reportage": {"fr": "Un reportage suit {T} pendant toute la saison.", "zh": "一部纪录片全程跟拍{T}一整个赛季。"}, "noun:la société": {"fr": "La société attend du sport qu'il montre l'exemple.", "zh": "社会期待体育起带头作用。"}, "noun:la grève": {"fr": "Une grève des transports complique l'accès au circuit.", "zh": "交通罢工让人很难到达赛道。"}, "noun:l'environnement": {"fr": "La Formule 1 dit vouloir protéger l'environnement.", "zh": "一级方程式表示要保护环境。"}, "noun:le climat": {"fr": "Le climat oblige à déplacer certaines courses.", "zh": "气候迫使一些比赛改期。"}, "noun:la pollution": {"fr": "La pollution sonore gêne les riverains du circuit.", "zh": "噪音污染困扰着赛道附近的居民。"}, "noun:l'énergie": {"fr": "L'énergie électrique représente la moitié de la puissance.", "zh": "电能占了动力的一半。"}, "noun:l'économie": {"fr": "L'économie du sport automobile pèse des milliards.", "zh": "赛车运动的经济规模达数十亿。"}, "noun:l'entreprise": {"fr": "{T} est une entreprise de plus de mille personnes.", "zh": "{T}是一家一千多人的企业。"}, "noun:le salaire": {"fr": "Le salaire des pilotes n'entre pas dans le plafond budgétaire.", "zh": "车手的薪水不计入预算帽。"}, "noun:la croissance": {"fr": "La croissance de l'audience vient des jeunes.", "zh": "观众的增长来自年轻人。"}, "noun:le logiciel": {"fr": "Le logiciel analyse les données en direct.", "zh": "这个软件实时分析数据。"}, "noun:le réseau": {"fr": "Le réseau est saturé pendant la course.", "zh": "比赛期间网络拥堵。"}, "noun:les données": {"fr": "Les données de {P} sont envoyées au stand en direct.", "zh": "{P}的数据实时传回维修区。"}, "noun:l'écran": {"fr": "L'écran du stand affiche tous les temps au tour.", "zh": "维修区的屏幕显示所有圈速。"}, "noun:le gouvernement": {"fr": "Le gouvernement local finance une partie du circuit.", "zh": "当地政府出资建了一部分赛道。"}, "noun:la loi": {"fr": "La loi locale limite le bruit après vingt-deux heures.", "zh": "当地法律限制晚上十点后的噪音。"}, "noun:le droit": {"fr": "Chaque écurie a le droit de faire appel.", "zh": "每支车队都有上诉的权利。"}, "noun:la liberté": {"fr": "Les pilotes de {T} ont la liberté de se battre en piste.", "zh": "{T}的车手可以自由地在赛道上相争。"}, "noun:la tradition": {"fr": "La tradition veut qu'on arrose le vainqueur.", "zh": "按传统要给胜者浇酒。"}, "adj:content": {"fr": "Un pilote content. Une équipe contente.", "zh": "一位满意的车手。一支满意的车队。"}, "adj:fatigué": {"fr": "Un pilote fatigué. Une équipe fatiguée.", "zh": "一位疲惫的车手。一支疲惫的车队。"}, "adj:chaud": {"fr": "Un pneu chaud. Une piste chaude.", "zh": "热的轮胎。热的赛道。"}, "adj:froid": {"fr": "Un moteur froid. Une matinée froide.", "zh": "冷的引擎。寒冷的早晨。"}, "adj:jeune": {"fr": "Un jeune pilote. Une jeune écurie.", "zh": "一位年轻车手。一支年轻的车队。"}, "adj:mondial": {"fr": "Le championnat mondial. La presse mondiale.", "zh": "世界锦标赛。世界媒体。"}, "adj:écologique": {"fr": "Un carburant écologique. Une solution écologique.", "zh": "生态燃料。生态方案。"}, "adj:numérique": {"fr": "Un outil numérique. Une simulation numérique.", "zh": "数字工具。数字模拟。"}, "verb:apprendre": {"fr": "{P} apprend encore ce circuit.", "zh": "{P}还在熟悉这条赛道。"}, "verb:comprendre": {"fr": "{T} ne comprend pas encore ce problème.", "zh": "{T}还没搞懂这个问题。"}, "verb:expliquer": {"fr": "L'ingénieur explique la stratégie à {P}.", "zh": "工程师向{P}解释策略。"}, "verb:chercher": {"fr": "{T} cherche encore du rythme en qualification.", "zh": "{T}还在寻找排位赛的节奏。"}, "verb:trouver": {"fr": "{P} trouve enfin le bon réglage.", "zh": "{P}终于找到了合适的调校。"}, "verb:aider": {"fr": "{P2} aide son coéquipier dans le dernier tour.", "zh": "{P2}在最后一圈帮了队友。"}, "verb:changer": {"fr": "Nous changeons de pneus au douzième tour.", "zh": "我们第十二圈换胎。"}, "verb:augmenter": {"fr": "La pression augmente sur {T} avant la dernière manche.", "zh": "最后一站前{T}的压力在上升。"}, "verb:protéger": {"fr": "{P} protège ses pneus pendant dix tours.", "zh": "{P}连续十圈保护轮胎。"}, "verb:permettre": {"fr": "Le règlement permet un seul changement de moteur.", "zh": "规则只允许换一次引擎。"}}, "entities": {"people": [["Max Verstappen", "Red Bull", "néerlandais"], ["Isack Hadjar", "Red Bull", "français"], ["Lando Norris", "McLaren", "britannique"], ["Oscar Piastri", "McLaren", "australien"], ["Charles Leclerc", "Ferrari", "monégasque"], ["Lewis Hamilton", "Ferrari", "britannique"], ["George Russell", "Mercedes", "britannique"], ["Kimi Antonelli", "Mercedes", "italien"], ["Alexander Albon", "Williams", "thaïlandais"], ["Carlos Sainz", "Williams", "espagnol"], ["Liam Lawson", "Racing Bulls", "néo-zélandais"], ["Arvid Lindblad", "Racing Bulls", "britannique"], ["Fernando Alonso", "Aston Martin", "espagnol"], ["Lance Stroll", "Aston Martin", "canadien"], ["Esteban Ocon", "Haas", "français"], ["Oliver Bearman", "Haas", "britannique"], ["Nico Hülkenberg", "Audi", "allemand"], ["Gabriel Bortoleto", "Audi", "brésilien"], ["Pierre Gasly", "Alpine", "français"], ["Franco Colapinto", "Alpine", "argentin"], ["Sergio Pérez", "Cadillac", "mexicain"], ["Valtteri Bottas", "Cadillac", "finlandais"]], "orgs": ["Red Bull", "McLaren", "Ferrari", "Mercedes", "Williams", "Racing Bulls", "Aston Martin", "Haas", "Audi", "Alpine", "Cadillac"]}, "news": [{"q": "Châssis, groupe propulseur, pneus, carburant: tout est repensé.", "zh": "底盘、动力单元、轮胎、燃料：一切都被重新设计。", "src": "Blick", "url": "https://www.blick.ch/fr/sport/formule-1/tout-change-en-2026-les-f1-sont-plus-petites-et-plus-legeres-mais-est-ce-vraiment-mieux-id21720714.html", "topic": "2026 新规", "who": []}, {"q": "Le DRS sera supprimé de la Formule 1 en 2026.", "zh": "DRS 将在 2026 年被取消。", "src": "Reuters / Soccerway", "url": "https://fr.soccerway.com/actualites/sport-mecanique-formule-1-la-f1-et-la-fia-annoncent-de-nouveaux-reglements-pour-la-saison-2026/v90vPpkl", "topic": "2026 新规", "who": []}, {"q": "Le MGU-K délivrera 350 kW en 2026, contre 120 kW aujourd'hui.", "zh": "MGU-K 在 2026 年将输出 350 千瓦，而现在是 120 千瓦。", "src": "info.fr", "url": "https://info.fr/f1-2026-nouveau-moteur-v6-hybride-reglement/", "topic": "2026 新规", "who": []}, {"q": "F1: révolution technologique, puissance hybride, aéro active et fin du DRS", "zh": "F1：技术革命、混合动力、主动空气动力学，以及 DRS 的终结", "src": "Euronews", "url": "https://fr.euronews.com/2026/03/07/f1-revolution-technologique-puissance-hybride-aero-active-et-fin-du-drs", "topic": "2026 新规", "who": []}, {"q": "Le poids minimum passera de 798 kg à 768 kg.", "zh": "最低重量将从 798 公斤降到 768 公斤。", "src": "Lesvoitures.fr", "url": "https://lesvoitures.fr/f1-2026-reglement-technique-f1-2026/", "topic": "2026 新规", "who": []}, {"q": "Lando Norris sacré champion du monde de F1 après une saison sous tension", "zh": "在一个充满张力的赛季之后，兰多·诺里斯加冕 F1 世界冠军", "src": "Le Temps", "url": "https://www.letemps.ch/sport/lando-norris-sacre-champion-du-monde-de-f1-apres-une-saison-sous-tension", "topic": "车手", "who": ["Lando Norris"]}, {"q": "Qui l'emportera en 2026? La rédaction de Blick débat!", "zh": "2026 年谁会夺冠？Blick 编辑部展开辩论！", "src": "Blick", "url": "https://www.blick.ch/fr/sport/formule-1/la-redaction-de-blick-saffronte-qui-sera-champion-du-monde-de-formule-1-en-2026-id21565743.html", "topic": "车手", "who": []}, {"q": "Bravo à Max pour cette remontée sensationnelle", "zh": "为马克斯这次惊人的反超喝彩", "src": "bluewin（引述红牛领队 Laurent Mekies）", "url": "https://www.bluewin.ch/fr/sport/sport-automobile/max-verstappen-relance-sa-course-au-titre-apres-un-regain-inespere-li.2984367", "topic": "车手", "who": ["Max Verstappen"]}, {"q": "Isack Hadjar rassure pour ses débuts chez Red Bull Racing.", "zh": "伊萨克·哈贾尔在红牛的首秀让人放心。", "src": "Motorsactu", "url": "https://motorsactu.com/tag/f1/", "topic": "车手", "who": ["Isack Hadjar"]}, {"q": "Les écuries de F1 connaissent d'énormes changements.", "zh": "F1 各车队正经历巨大的变化。", "src": "Europe 1", "url": "https://www.europe1.fr/sport/ecuries-reglement-technique-circuits-la-formule-1-fait-sa-revolution-en-2026-901197", "topic": "车队", "who": []}, {"q": "Cadillac utilisera des blocs Ferrari.", "zh": "凯迪拉克将使用法拉利的引擎。", "src": "Lesvoitures.fr", "url": "https://lesvoitures.fr/f1-2026-reglement-technique-f1-2026/", "topic": "车队", "who": []}, {"q": "La grille 2026 compte onze écuries et vingt-deux pilotes titulaires.", "zh": "2026 年的发车格有十一支车队、二十二名正式车手。", "src": "La Piste F1", "url": "https://lapistef1.fr/actualite/transferts-f1-2026/", "topic": "车队", "who": []}], "tenses": [{"k": "pres", "lvl": "A1", "zh": "现在时 présent"}, {"k": "imperatif", "lvl": "A1", "zh": "命令式 impératif"}, {"k": "futproche", "lvl": "A1", "zh": "最近将来时 futur proche"}, {"k": "passerecent", "lvl": "A1", "zh": "最近过去时 passé récent"}, {"k": "pc", "lvl": "A1", "zh": "复合过去时 passé composé"}, {"k": "imp", "lvl": "A2", "zh": "未完成过去时 imparfait"}, {"k": "fut", "lvl": "A2", "zh": "简单将来时 futur simple"}, {"k": "cond", "lvl": "A2", "zh": "条件式现在时 conditionnel présent"}, {"k": "pqp", "lvl": "B1", "zh": "愈过去时 plus-que-parfait"}, {"k": "subj", "lvl": "B1", "zh": "虚拟式现在时 subjonctif présent"}, {"k": "futant", "lvl": "B2", "zh": "先将来时 futur antérieur"}, {"k": "condpasse", "lvl": "B2", "zh": "条件式过去时 conditionnel passé"}, {"k": "ps", "lvl": "C1", "zh": "简单过去时 passé simple"}], "levels": ["A1", "A2", "B1", "B2", "C1"], "coverage": {"A1": {"covered": ["交通工具", "休闲与运动", "住房与家具", "假期与旅行", "国家与国籍", "城市场所/商店", "天气", "家庭与人际", "数字/身份", "日常活动", "日常物品", "日期/季节/节日", "服饰与配件", "职业与工作", "重量与计量", "饮食与烹饪"], "missing": [], "pct": 100}, "A2": {"covered": ["休闲与运动", "住房与家具", "假期与旅行", "健康", "外貌/性格", "家庭与人际", "教育体系与学习", "日常活动", "日常物品", "服饰与配件", "职业与工作", "风俗与传统", "饮食与烹饪"], "missing": [], "pct": 100}, "B1": {"covered": ["休闲与运动", "假期与旅行", "健康", "外貌/性格", "媒体与时事", "家庭与人际", "情感与情绪", "教育体系与学习", "文化题材", "日常活动", "时尚", "职业与工作", "风俗与传统"], "missing": [], "pct": 100}, "B2": {"covered": ["专业词汇", "信息与通信技术", "媒体与时事", "情感与情绪", "政治与社会价值", "教育体系与学习", "文化题材", "时尚", "环境/气候/生态", "社会趋势与问题", "经济", "职业与工作", "风俗与传统"], "missing": [], "pct": 100}, "C1": {"covered": ["政治与社会价值", "文化题材", "社会趋势与问题", "经济"], "missing": [], "pct": 100}}, "blocked": ["Sainz", "Hadjar", "Antonelli"]};
+const WORDS   = PAYLOAD.vocab;        // 语言包：词条本身
+const SENTS   = PAYLOAD.sentences;    // 主题包：例句，按词条 id 索引
+const DRIVERS = PAYLOAD.entities.people;
+const TEAMS   = PAYLOAD.entities.orgs;
+const NEWS    = PAYLOAD.news;
+const TENSES  = PAYLOAD.tenses;       // 语法模块：时态与等级门槛
+const LEVELS  = PAYLOAD.levels;
+const DEFAULT_BLOCK = PAYLOAD.blocked;
+
+/* ───────── 存储 ───────── */
+const LS = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v) }catch(e){ return d } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+};
+let blocked = LS.get("g_block", DEFAULT_BLOCK);
+let prog    = LS.get("g_prog", {});
+let session = {right:0, wrong:0};
+const saveAll = () => { LS.set("g_prog", prog); LS.set("g_block", blocked); };
+
+/* ───────── 工具 ───────── */
+const BOX_DAYS = [0, 0.0007, 1, 2, 4, 8, 16];
+const key = w => w.id;   // 必须与导出/导入校验用的 id 一致
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const norm = s => (s||"").normalize("NFC").trim().toLowerCase().replace(/\s+/g," ");
+const bare = fr => fr.replace(/^(le |la |les |l')/, "");
+
+function isBlockedName(name){
+  return blocked.some(b => b.trim() && name.toLowerCase().includes(b.trim().toLowerCase()));
+}
+// 例句来源：先主题包，主题没覆盖就回落到语言包的中性例句，都没有就返回 null
+function sentFor(w){
+  const s = SENTS[w.id];
+  if(s) return {fr:s.fr, zh:s.zh, who:s.who || []};
+  if(w.neu) return {fr:w.neu, zh:w.neuzh, who:[]};
+  return null;
+}
+// 一条词被整条过滤，只有当它的例句「讲的就是」某个被屏蔽的人
+function wordBlocked(w){
+  const s = SENTS[w.id];
+  return !!(s && (s.who || []).some(isBlockedName));
+}
+
+function freeDrivers(){
+  const ok = DRIVERS.filter(d => !isBlockedName(d[0]));
+  return ok.length ? ok : DRIVERS;          // 全被屏蔽时退回全体，避免空白
+}
+function freeTeams(){
+  const ok = TEAMS.filter(t => !isBlockedName(t));
+  return ok.length ? ok : TEAMS;
+}
+/* 把 {P} {P2} {T} 换成真实名字。法语和中文用同一组名字，保证两边一致。 */
+function fill(w){
+  const s = sentFor(w);
+  if(!s) return null;
+  const ds = shuffle(freeDrivers());
+  const p  = ds[0] ? ds[0][0] : "";
+  const p2 = ds[1] ? ds[1][0] : (ds[0] ? ds[0][0] : "");
+  const t  = shuffle(freeTeams())[0];
+  const sub = x => x.replace(/\{P2\}/g, p2).replace(/\{P\}/g, p).replace(/\{T\}/g, t);
+  return {ex: sub(s.fr), exzh: sub(s.zh), names:[p, p2, t]};
+}
+// 在例句里把人名高亮
+function hi(sent, names){
+  let out = esc(sent);
+  names.filter(Boolean).forEach(n => {
+    out = out.split(esc(n)).join('<span class="who">' + esc(n) + '</span>');
+  });
+  return out;
+}
+
+function pool(extra){
+  const lv = $("lvl").value;
+  return WORDS.filter(w => !wordBlocked(w)
+    && (lv === "all" || w.lvl === lv)
+    && (!extra || extra(w)));
+}
+function pick(arr){
+  if(!arr || !arr.length) return null;
+  const now = Date.now();
+  const due = arr.filter(w => { const p = prog[key(w)]; return !p || p.due <= now; });
+  const src = due.length ? due : arr;
+  return src[Math.floor(Math.random() * src.length)];
+}
+function grade(w, good){
+  const k = key(w);
+  const p = prog[k] || {box:0, seen:0, err:0};
+  p.seen++;
+  if(good){ p.box = Math.min(6, p.box + 1); session.right++; }
+  else    { p.box = 0; p.err++; session.wrong++; }
+  p.due = Date.now() + BOX_DAYS[p.box] * 86400000;
+  prog[k] = p; saveAll(); drawBar();
+}
+
+function diff(got, want){
+  let out = "";
+  for(let i = 0; i < Math.max(got.length, want.length); i++){
+    const a = got[i], b = want[i];
+    if(a === undefined) out += '<b>_</b>';
+    else if(a === b) out += esc(a);
+    else out += '<b>' + esc(a) + '</b>';
+  }
+  return out;
+}
+
+
+/* ───────── 发音 ───────── */
+let VOICES = [];
+function refreshVoices(){ try{ VOICES = speechSynthesis.getVoices() || []; }catch(e){ VOICES = []; } }
+function frVoice(){ return VOICES.find(v => /^fr/i.test(v.lang)) || null; }
+function ttsReady(){ return typeof speechSynthesis !== "undefined"; }
+try{ refreshVoices(); speechSynthesis.onvoiceschanged = refreshVoices; }catch(e){}
+
+let autoSay = LS.get("g_autosay", true);
+function speak(txt){
+  if(!ttsReady()) return false;
+  try{
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = "fr-FR"; u.rate = .8;
+    const v = frVoice(); if(v) u.voice = v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+// 每道题自动念一次目标词；句子不念，太长也没必要
+function say(w){ if(autoSay && w) speak(bare(w.fr)); }
+const sayBtn = (txt, label) =>
+  `<button class="btn sm" data-speak="${esc(txt)}" style="margin-top:0">🔊 ${label || "发音"}</button>`;
+
+/* 法语拼读规则：按词形匹配，不需要逐词标注，加多少词都自动生效。
+   专门针对「习惯英语拼读」会踩的坑，最多显示两条，避免刷屏。 */
+const READ_RULES = [
+  {re:/eau/i,  zh:"<b>eau</b> 读作 /o/，一个音，不是「依-欧」"},
+  {re:/œu|eu/i,zh:"<b>eu</b> 读作 /ø/，嘴唇圆、舌头靠前，英语里没有这个音"},
+  {re:/oi/i,   zh:"<b>oi</b> 读作 /wa/，像「瓦」，不读「欧伊」"},
+  {re:/ou/i,   zh:"<b>ou</b> 读作 /u/，像英语 soup 里的 oo"},
+  {re:/ai|ei/i,zh:"<b>ai / ei</b> 读作 /ɛ/，像英语 bed 的 e，不是英语的 ai"},
+  {re:/au/i, not:/eau/i, zh:"<b>au</b> 读作 /o/"},   // eau 已经覆盖了这条，避免重复
+  {re:/ille/i, zh:"<b>ille</b> 读作 /ij/，像「伊耶」"},
+  {re:/ui/i,   zh:"<b>ui</b> 读作 /ɥi/，先圆唇再滑到 i"},
+  {re:/(ain|ein|in|im)(?![aeiouéèêy])/i, zh:"<b>in / ain</b> 是鼻音 /ɛ̃/，气流走鼻子，n 不单独读出来"},
+  {re:/(on|om)(?![aeiouéèêy])/i,         zh:"<b>on / om</b> 是鼻音 /ɔ̃/，n 不单独读出来"},
+  {re:/(an|am|en|em)(?![aeiouéèêy])/i,   zh:"<b>an / en</b> 是鼻音 /ɑ̃/，n 不单独读出来"},
+  {re:/gn/i,   zh:"<b>gn</b> 读作 /ɲ/，像英语 onion 中间那个音"},
+  {re:/qu/i,   zh:"<b>qu</b> 读作 /k/，不读英语的 kw"},
+  {re:/ch/i,   zh:"<b>ch</b> 读作 /ʃ/，像英语的 sh，不是 ch"},
+  {re:/ph/i,   zh:"<b>ph</b> 读作 /f/"},
+  {re:/th/i,   zh:"<b>th</b> 就读 /t/，没有英语那种咬舌音"},
+  {re:/ç/i,    zh:"<b>ç</b> 读作 /s/"},
+  {re:/^h|^l'h/i, zh:"词首的 <b>h</b> 不发音"},
+  {re:/é/,     zh:"<b>é</b> 读作 /e/，嘴角拉开；和 è 不是同一个音"},
+  {re:/è|ê/,   zh:"<b>è / ê</b> 读作 /ɛ/，比 é 开口大"},
+  {re:/u(?![ieao])/i, strip:true, zh:"<b>u</b> 读作 /y/：舌头摆 i 的位置，嘴唇摆 u 的形状，英语里没有"},
+  {re:/r/i,    zh:"<b>r</b> 是小舌音，在喉咙后部，完全不像英语的 r"},
+];
+function readHints(w){
+  const s = bare(w.fr);
+  // 去掉双字母组合后的版本：用来判断某个字母是不是真的单独发音
+  const solo = s.replace(/eau|au|ou|œu|eu|qu|gu/gi, "~");
+  const out = [];
+  for(const r of READ_RULES){
+    const target = r.strip ? solo : s;
+    if(r.not && r.not.test(s)) continue;
+    if(r.re.test(target)) out.push(r.zh);
+    if(out.length === 2) break;
+  }
+  if(w.t === "verb" && /er$/i.test(s))
+    out.unshift("动词原形的 <b>-er</b> 词尾读 /e/，<b>r 不发音</b>");
+  return out.slice(0, 2);
+}
+// 发音块：念一次的按钮 + 拼读提示。答完题时显示，正是该看的时候。
+function pronBlock(w){
+  const hints = readHints(w);
+  const warn = ttsReady() ? "" :
+    '<div class="sub" style="color:var(--bad)">这个环境没有语音功能，只能看拼读提示。</div>';
+  return `<div class="row" style="margin-top:12px">${sayBtn(bare(w.fr), "再听一次")}</div>${warn}` +
+    (hints.length ? `<div class="sub" style="margin-top:8px;line-height:1.75">读音提示：<br>· ${hints.join("<br>· ")}</div>` : "");
+}
+
+/* ───────── 变位生成 ───────── */
+const PRON = {je:"je", tu:"tu", il:"il", nous:"nous", vous:"vous", ils:"ils"};
+const AUX = {
+  avoir:{je:"ai",tu:"as",il:"a",nous:"avons",vous:"avez",ils:"ont"},
+  "être":{je:"suis",tu:"es",il:"est",nous:"sommes",vous:"êtes",ils:"sont"}
+};
+const IMP_END  = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
+const FUT_END  = {je:"ai",tu:"as",il:"a",nous:"ons",vous:"ez",ils:"ont"};
+const SUBJ_END = {je:"e",tu:"es",il:"e",nous:"ions",vous:"iez",ils:"ent"};
+const PERSONS  = ["je","tu","il","nous","vous","ils"];
+// 助动词在各时态的形式，用于合成复合时态
+const AUX_IMP  = {avoir:{je:"avais",tu:"avais",il:"avait",nous:"avions",vous:"aviez",ils:"avaient"},
+                  "être":{je:"étais",tu:"étais",il:"était",nous:"étions",vous:"étiez",ils:"étaient"}};
+const AUX_FUT  = {avoir:{je:"aurai",tu:"auras",il:"aura",nous:"aurons",vous:"aurez",ils:"auront"},
+                  "être":{je:"serai",tu:"seras",il:"sera",nous:"serons",vous:"serez",ils:"seront"}};
+const AUX_COND = {avoir:{je:"aurais",tu:"aurais",il:"aurait",nous:"aurions",vous:"auriez",ils:"auraient"},
+                  "être":{je:"serais",tu:"serais",il:"serait",nous:"serions",vous:"seriez",ils:"seraient"}};
+const ALLER_PRES = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils:"vont"};
+const VENIR_PRES = {je:"viens",tu:"viens",il:"vient",nous:"venons",vous:"venez",ils:"viennent"};
+
+const isRefl = w => /^s[e']/.test(w.fr);
+const reflPron = p => ({je:"me",tu:"te",il:"se",nous:"nous",vous:"vous",ils:"se"})[p];
+const stripRefl = s => s.replace(/^(me|te|se|nous|vous)\s+/, "");
+// ç 和 ge 只在 a / o 前保留；以 i 开头的词尾要还原成 c / g
+const fixStem = (stem, end) => end.startsWith("i")
+  ? stem.replace(/ç$/, "c").replace(/ge$/, "g") : stem;
+const nousStem = w => stripRefl(w.pres.nous).replace(/ons$/, "");
+const ilsStem  = w => stripRefl(w.pres.ils).replace(/ent$/, "");
+
+function pastPart(w, p){           // être 作助动词时过去分词要性数配合
+  let pp = w.pp;
+  if(w.aux === "être"){
+    if(p === "nous" || p === "ils") pp += "s";
+    else if(p === "je" || p === "tu") pp += "(e)";
+  }
+  return pp;
+}
+function conjugate(w, tense, p){
+  const R = isRefl(w) ? reflPron(p) + " " : "";
+  switch(tense){
+    case "pres": return w.pres[p];
+    case "pc":        return R + AUX[w.aux][p]      + " " + pastPart(w, p);
+    case "pqp":       return R + AUX_IMP[w.aux][p]  + " " + pastPart(w, p);
+    case "futant":    return R + AUX_FUT[w.aux][p]  + " " + pastPart(w, p);
+    case "condpasse": return R + AUX_COND[w.aux][p] + " " + pastPart(w, p);
+    case "imp":  return R + fixStem(nousStem(w), IMP_END[p]) + IMP_END[p];
+    case "fut":  return R + w.fut + FUT_END[p];
+    case "cond": return R + w.fut + IMP_END[p];
+    case "subj": {
+      if(w.subj) return R + w.subj[PERSONS.indexOf(p)];
+      const end = SUBJ_END[p];
+      // nous / vous 用现在时 nous 的词干，其余用 ils 的词干
+      const stem = (p === "nous" || p === "vous") ? fixStem(nousStem(w), end) : ilsStem(w);
+      return R + stem + end;
+    }
+    case "ps": return p === "ils" ? w.ps[1] : w.ps[0];   // 简单过去时只练第三人称
+    case "imperatif": {
+      if(w.impo) return ({tu:w.impo[0], nous:w.impo[1], vous:w.impo[2]})[p];
+      if(w.fr === "aller" && p === "tu") return "va";
+      let f = w.pres[p];
+      if(p === "tu" && /es$/.test(f)) f = f.slice(0, -1);  // -er 类命令式去掉词尾 s
+      return f;
+    }
+    case "futproche":   return ALLER_PRES[p] + " " + w.fr;
+    case "passerecent": return VENIR_PRES[p] + " de " + w.fr;
+  }
+}
+// 这些时态能出哪些人称
+function personsFor(tense){
+  if(tense === "ps") return ["il","ils"];
+  if(tense === "imperatif") return ["tu","nous","vous"];
+  return PERSONS;
+}
+// 按用户选的等级过滤时态：选 A2 就不会考 B1 才要求的虚拟式
+function tensesFor(w, lvl){
+  const cap = lvl === "all" ? LEVELS.length - 1 : LEVELS.indexOf(lvl);
+  return TENSES.filter(t => LEVELS.indexOf(t.lvl) <= cap).filter(t => {
+    if(t.k === "ps" && !w.ps) return false;
+    // 代词式动词的命令式和近时态要带反身代词，规则复杂，先不出题
+    if(isRefl(w) && ["imperatif","futproche","passerecent"].includes(t.k)) return false;
+    return true;
+  });
+}
+
+/* ───────── 题型 ───────── */
+const Q = {
+  flash :{zh:"翻卡片",    fn:qFlash },
+  gender:{zh:"阴阳性",    fn:qGender},
+  cloze :{zh:"填空",      fn:qCloze },
+  spell :{zh:"拼写",      fn:qSpell },
+  conj  :{zh:"变位",      fn:qConj  },
+  adj   :{zh:"形容词配合", fn:qAdj   },
+  trap  :{zh:"英语陷阱",   fn:qTrap  },
+  match :{zh:"配对",      fn:qMatch }
+};
+// 混合练习时，每类词可出的题型。重复出现＝出现概率更高，偏向你的弱项。
+const MIX_FOR = {
+  noun:["gender","gender","gender","spell","spell","cloze","flash","match"],
+  verb:["conj","conj","conj","spell","spell","flash","match"],
+  adj :["adj","adj","adj","spell","flash","match"],
+  ff  :["trap","trap","cloze","spell","flash"],
+  conn:["cloze","cloze","flash","match"]
+};
+const POS = {noun:"名词", verb:"动词", adj:"形容词", ff:"陷阱词", conn:"连接词"};
+
+let qmode = LS.get("g_qmode", "mix");
+let tab   = "practice";
+let lastQ = null;
+
+function lvPill(w, extra){
+  return `<div class="pills"><span class="pill lv">${w.lvl}</span>` +
+         `<span class="pill">${POS[w.t]}</span>${extra || ""}</div>`;
+}
+const stage = html => { $("stage").innerHTML = '<div class="card">' + html + '</div>'; };
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-speak]");
+  if(el){ e.stopPropagation(); e.preventDefault(); speak(el.dataset.speak); }
+}, true);
+const sentOf = s => s.split(" / ")[0];
+
+function fb(host, good, html){
+  host.insertAdjacentHTML("beforeend",
+    `<div class="fb"><div class="verdict ${good?'ok':'bad'}">${good?'✅ 对了':'❌ 不对'}</div>${html}
+     <div class="row"><button class="btn main" id="nx">下一题 →</button></div></div>`);
+  $("nx").onclick = next;
+  $("nx").focus();
+}
+function exBlock(w){
+  const f = fill(w);
+  if(!f) return "";                      // 主题和语言包都没给例句
+  return `<blockquote><div class="sent">${hi(sentOf(f.ex), f.names)}</div>
+          <div class="sentzh">${esc(sentOf(f.exzh))}</div></blockquote>`;
+}
+
+function next(){
+  if(tab !== "practice") return;
+  if(qmode !== "mix"){ lastQ = qmode; return Q[qmode].fn(); }
+  // 混合：先抽词，再按词性挑一种合适的题型，避免和上一题重复
+  const w = pick(pool());
+  if(!w) return stage("这个等级没有可用的词，换一个等级试试。");
+  let cands = MIX_FOR[w.t].filter(t => t !== lastQ);
+  if(!cands.length) cands = MIX_FOR[w.t];
+  const t = cands[Math.floor(Math.random() * cands.length)];
+  lastQ = t;
+  Q[t].fn(w);
+}
+
+/* 1 翻卡片 */
+function qFlash(w){
+  w = w || pick(pool());
+  if(!w) return stage("没有可用的词。");
+  const f = fill(w);
+  const gp = w.t === "noun" ? `<span class="pill ${w.g}">${w.g==="m"?"阳性 le":"阴性 la"}</span>` : "";
+  const front = `${lvPill(w, gp)}<div class="word">${esc(w.fr)}</div>
+    <div class="row">${sayBtn(bare(w.fr))}</div>
+    <div class="sub" style="margin-top:8px">点卡片其它地方看答案</div>`;
+  stage(front);
+  say(w);
+  const card = $("stage").firstElementChild;
+  card.onclick = () => {
+    let extra = "";
+    if(w.t === "verb") extra = '<table class="conj">' + ["je","tu","il","nous","vous","ils"]
+      .map(p => `<tr><td>${PRON[p]}</td><td>${esc(conjugate(w,"pres",p))}</td></tr>`).join("") + "</table>";
+    if(w.t === "adj") extra = `<div class="sub">阳性 <span class="m">${esc(w.m)}</span> · 阴性 <span class="f">${esc(w.f)}</span></div>`;
+    if(w.t === "ff")  extra = `<div class="pills"><span class="pill warn">⚠ 像英语 ${esc(w.looks)}</span></div><div class="sub">${esc(w.wrong)}</div>`;
+    const exHtml = f ? `<blockquote><div class="sent">${hi(sentOf(f.ex), f.names)}</div>
+        <div class="sentzh">${esc(sentOf(f.exzh))}</div></blockquote>` : "";
+    card.innerHTML = `${lvPill(w, gp)}<div class="word">${esc(w.fr)}</div>
+      <div class="gloss">${esc(w.zh)}</div><div class="sub">${esc(w.en)}</div>${extra}
+      ${exHtml}${pronBlock(w)}
+      <div class="row"><button class="btn" id="no">❌ 还不会</button>
+        <button class="btn main" id="yes">✅ 会了</button></div>`;
+    card.onclick = null;
+    $("no").onclick  = () => { grade(w,false); next(); };
+    $("yes").onclick = () => { grade(w,true);  next(); };
+  };
+}
+
+/* 2 阴阳性 */
+function qGender(w){
+  w = w || pick(pool(x => x.t === "noun"));
+  if(!w || w.t !== "noun") return qFlash(w);
+  stage(`<div class="hint">这个名词是阴性还是阳性？</div>
+    ${lvPill(w, w.trap ? '<span class="pill warn">⚠ 容易猜错</span>' : '')}
+    <div class="word">${esc(bare(w.fr))}</div><div class="gloss">${esc(w.zh)}</div>
+    <div class="row">${sayBtn(bare(w.fr))}</div>
+    <div class="opts two"><button class="opt" data-g="m">阳性 · le / un</button>
+      <button class="opt" data-g="f">阴性 · la / une</button></div>`);
+  say(w);
+  const card = $("stage").firstElementChild;
+  card.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    const good = b.dataset.g === w.g;
+    card.querySelectorAll(".opt").forEach(x => {
+      x.disabled = true;
+      if(x.dataset.g === w.g) x.classList.add("ok"); else if(x === b) x.classList.add("bad");
+    });
+    grade(w, good);
+    speak(bare(w.fr));
+    fb(card, good, `<div class="sent">正确：<b class="${w.g}">${esc(w.fr)}</b></div>${pronBlock(w)}${exBlock(w)}`);
+  });
+}
+
+/* 3 填空 */
+function qCloze(w){
+  const cands = pool(x => x.t !== "adj" && sentFor(x));
+  if(w && !sentFor(w)) return qMeaning(w, pool(x => x.id !== w.id));
+  w = w || pick(cands);
+  if(!w) return stage("没有可用的词。");
+  const f = fill(w);
+  if(!f) return qMeaning(w, cands);
+  const target = bare(w.fr).split(/[  ]/)[0];
+  const sent = sentOf(f.ex);
+  const stem = target.length > 5 ? target.slice(0, target.length - 2) : target.slice(0, 3);
+  const re = new RegExp(stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[\\wéèêàâîïôûùçœ']*", "i");
+  const hit = sent.match(re);
+  if(!hit) return qMeaning(w, cands);
+  const answer = hit[0];
+  const wrongs = shuffle(cands.filter(x => x.fr !== w.fr)).slice(0,3).map(x => bare(x.fr).split(/[  ]/)[0]);
+  const opts = shuffle([answer, ...wrongs]);
+  stage(`<div class="hint">选出填进空格的词</div>${lvPill(w)}
+    <blockquote><div class="sent">${hi(sent.replace(re,"______"), f.names)}</div>
+      <div class="sentzh">${esc(sentOf(f.exzh))}</div></blockquote>
+    <div class="opts">${opts.map(o=>`<button class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join("")}</div>`);
+  const card = $("stage").firstElementChild;
+  card.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    const good = b.dataset.v === answer;
+    card.querySelectorAll(".opt").forEach(x => {
+      x.disabled = true;
+      if(x.dataset.v === answer) x.classList.add("ok"); else if(x === b) x.classList.add("bad");
+    });
+    grade(w, good);
+    speak(bare(w.fr));
+    fb(card, good, `<div class="sent">${esc(w.fr)} — ${esc(w.zh)}</div>${pronBlock(w)}`);
+  });
+}
+/* 3b 备用：中译法四选一 */
+function qMeaning(w, cands){
+  const opts = shuffle([w, ...shuffle(cands.filter(x=>x.id!==w.id)).slice(0,3)]);
+  stage(`<div class="hint">哪个词是这个意思？</div>${lvPill(w)}
+    <div class="word" style="font-size:26px">${esc(w.zh)}</div>
+    <div class="opts">${opts.map(o=>`<button class="opt" data-v="${esc(o.fr)}">${esc(o.fr)}</button>`).join("")}</div>`);
+  const card = $("stage").firstElementChild;
+  card.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    const good = b.dataset.v === w.fr;
+    card.querySelectorAll(".opt").forEach(x => {
+      x.disabled = true;
+      if(x.dataset.v === w.fr) x.classList.add("ok"); else if(x === b) x.classList.add("bad");
+    });
+    grade(w, good);
+    speak(bare(w.fr));
+    fb(card, good, pronBlock(w) + exBlock(w));
+  });
+}
+
+/* 4 拼写 */
+function qSpell(w){
+  w = w || pick(pool(x => x.t !== "conn"));
+  if(!w) return stage("没有可用的词。");
+  const needArt = w.t === "noun";
+  const want = needArt ? w.fr : bare(w.fr);
+  stage(`<div class="hint">把法语拼出来${needArt?"（<b>要带冠词</b>）":""} · 重音符号必须正确</div>${lvPill(w)}
+    <div class="word" style="font-size:28px">${esc(w.zh)}</div><div class="sub">${esc(w.en)}</div>
+    <div class="row">${sayBtn(bare(w.fr), "听发音")}</div>
+    <div class="row"><input type="text" id="ans" autocomplete="off" autocapitalize="off" autocorrect="off"
+      spellcheck="false" placeholder="${needArt?"le / la + 单词":"法语"}">
+      <button class="btn main" id="go">检查</button></div>
+    <div class="sub" style="margin-top:8px">没有法语键盘？可复制：é è ê à â î ï ô û ù ç œ</div>`);
+  const card = $("stage").firstElementChild;
+  say(w);
+  const check = () => {
+    const got = $("ans").value, good = norm(got) === norm(want);
+    $("ans").classList.add(good?"ok":"bad"); $("ans").disabled = true; $("go").disabled = true;
+    grade(w, good);
+    fb(card, good, `<div class="sent">正确：<b>${esc(want)}</b></div>` +
+      (good?"":`<div class="sub diff">你写的：${diff(got.trim(), want)}</div>`) + pronBlock(w) + exBlock(w));
+  };
+  $("go").onclick = check;
+  $("ans").onkeydown = e => { if(e.key === "Enter") check(); };
+  $("ans").focus();
+}
+
+/* 5 变位 */
+function qConj(w){
+  w = w || pick(pool(x => x.t === "verb"));
+  if(!w || w.t !== "verb") return qFlash(w);
+  const avail = tensesFor(w, $("lvl").value);
+  if(!avail.length) return qFlash(w);
+  const tense = avail[Math.floor(Math.random()*avail.length)];
+  const tk = tense.k;
+  const ps = personsFor(tk);
+  const p = ps[Math.floor(Math.random()*ps.length)];
+  const want = conjugate(w, tk, p);
+  // 命令式没有主语代词
+  const lead = tk === "imperatif" ? "" : PRON[p] + " ";
+  stage(`<div class="hint">${tense.zh}<span class="pill" style="margin-left:8px">${tense.lvl}</span></div>${lvPill(w)}
+    <div class="word" style="font-size:30px">${esc(w.fr)}</div>
+    <div class="sub">${esc(w.zh)} · ${esc(w.en)}</div>
+    <div class="row">${sayBtn(bare(w.fr), "听原形")}</div>
+    <div class="sent" style="font-size:24px;margin-top:15px">${lead}<span style="color:var(--hot)">______</span>
+      ${tk==="imperatif" ? `<span class="sub">（对 ${PRON[p]} 说）</span>` : ""}</div>
+    <div class="row"><input type="text" id="ans" autocomplete="off" autocapitalize="off" autocorrect="off"
+      spellcheck="false" placeholder="只写变位部分"><button class="btn main" id="go">检查</button></div>`);
+  say(w);
+  const card = $("stage").firstElementChild;
+  const check = () => {
+    const got = $("ans").value;
+    const alts = [want, want.replace("(e)",""), want.replace("(e)","e")];
+    const good = alts.some(a => norm(got) === norm(a));
+    $("ans").classList.add(good?"ok":"bad"); $("ans").disabled = true; $("go").disabled = true;
+    grade(w, good);
+    const table = '<table class="conj">' + ps.map(x =>
+      `<tr><td>${tk==="imperatif" ? "（"+PRON[x]+"）" : PRON[x]}</td><td>${esc(conjugate(w,tk,x))}</td></tr>`).join("") + "</table>";
+    speak(want.replace(/\(e\)/,""));
+    fb(card, good, `<div class="sent">${lead}<b>${esc(want)}</b></div>` +
+      `<div class="row">${sayBtn(want.replace(/\(e\)/,""), "听这个形式")}</div>` +
+      (good?"":`<div class="sub diff">你写的：${diff(got.trim(), want)}</div>`) +
+      `<div class="sub" style="margin-top:10px">${tense.zh} 全部变位：</div>${table}`);
+  };
+  $("go").onclick = check;
+  $("ans").onkeydown = e => { if(e.key === "Enter") check(); };
+  $("ans").focus();
+}
+
+/* 6 形容词配合 */
+const ADJ_NOUNS = [["la voiture","f","车"],["le pilote","m","车手"],["l'équipe","f","车队"],
+  ["le pneu","m","轮胎"],["la piste","f","赛道"],["le moteur","m","引擎"],["la stratégie","f","策略"],
+  ["le résultat","m","结果"],["la course","f","比赛"],["le casque","m","头盔"],
+  ["la victoire","f","胜利"],["le virage","m","弯道"],["la monoplace","f","赛车"]];
+function qAdj(w){
+  w = w || pick(pool(x => x.t === "adj"));
+  if(!w || w.t !== "adj") return qFlash(w);
+  const [n,g,nzh] = ADJ_NOUNS[Math.floor(Math.random()*ADJ_NOUNS.length)];
+  const plural = Math.random() < .35;
+  let want = w[g];
+  if(plural && !/[sx]$/.test(want)) want += "s";
+  const noun = plural ? "les " + bare(n) + "s" : n;
+  stage(`<div class="hint">把形容词改成配合名词的形式${plural?"（<b>复数</b>）":""}</div>${lvPill(w)}
+    <div class="word" style="font-size:30px">${esc(w.fr)}</div><div class="sub">${esc(w.zh)}</div>
+    <div class="row">${sayBtn(bare(w.fr))}</div>
+    <div class="sent" style="font-size:23px;margin-top:15px">${esc(noun)} <span style="color:var(--hot)">______</span>
+      <span class="sub">（${esc(nzh)}，${g==="m"?"阳性":"阴性"}${plural?"复数":""}）</span></div>
+    <div class="row"><input type="text" id="ans" autocomplete="off" autocapitalize="off" autocorrect="off"
+      spellcheck="false"><button class="btn main" id="go">检查</button></div>`);
+  say(w);
+  const card = $("stage").firstElementChild;
+  const check = () => {
+    const got = $("ans").value, good = norm(got) === norm(want);
+    $("ans").classList.add(good?"ok":"bad"); $("ans").disabled = true; $("go").disabled = true;
+    grade(w, good);
+    speak(want);
+    fb(card, good, `<div class="sent">${esc(noun)} <b class="${g}">${esc(want)}</b></div>` +
+      `<div class="row">${sayBtn(want, "听阴阳性差别")}</div>` +
+      (good?"":`<div class="sub diff">你写的：${diff(got.trim(), want)}</div>`) +
+      `<div class="sub" style="margin-top:8px">阳性 <span class="m">${esc(w.m)}</span> · 阴性 <span class="f">${esc(w.f)}</span></div>`);
+  };
+  $("go").onclick = check;
+  $("ans").onkeydown = e => { if(e.key === "Enter") check(); };
+  $("ans").focus();
+}
+
+/* 7 英语陷阱 */
+function qTrap(w){
+  w = w || pick(pool(x => x.t === "ff"));
+  if(!w || w.t !== "ff") return qFlash(w);
+  const others = shuffle(pool(x => x.t === "ff" && x.fr !== w.fr)).slice(0,2);
+  let opts = shuffle([{txt:w.zh, ok:true},
+    {txt:w.wrong.split("（")[0], ok:false},
+    ...others.map(o=>({txt:o.zh, ok:false}))]).slice(0,4);
+  if(!opts.some(o=>o.ok)) opts[0] = {txt:w.zh, ok:true};
+  stage(`<div class="hint">⚠ 这个词长得像英语，但意思不一样</div>${lvPill(w)}
+    <div class="word">${esc(w.fr)}</div>
+    <div class="sub">看起来像英语的 <b>${esc(w.looks)}</b></div>
+    <div class="row">${sayBtn(bare(w.fr), "听法语怎么读")}</div>
+    <div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.txt)}</button>`).join("")}</div>`);
+  say(w);
+  const card = $("stage").firstElementChild;
+  card.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    const o = opts[+b.dataset.i];
+    card.querySelectorAll(".opt").forEach((x,i) => {
+      x.disabled = true;
+      if(opts[i].ok) x.classList.add("ok"); else if(x === b) x.classList.add("bad");
+    });
+    grade(w, o.ok);
+    speak(bare(w.fr));
+    fb(card, o.ok, `<div class="sent"><b>${esc(w.fr)}</b> = ${esc(w.zh)}（${esc(w.en)}）</div>
+      <div class="sub">⚠ 不是 ${esc(w.wrong)}</div>${pronBlock(w)}${exBlock(w)}`);
+  });
+}
+
+/* 8 配对 */
+function qMatch(){
+  // 左右两列都必须各不相同，否则会出现两个一样的选项，这一组就永远配不完。
+  // 释义里的括号说明要保留：「问题（提问）」和「问题（难题）」去掉括号后会撞车。
+  const ws = [];
+  const usedFr = new Set(), usedZh = new Set();
+  for(const w of shuffle(pool())){
+    if(usedFr.has(w.fr) || usedZh.has(w.zh)) continue;
+    usedFr.add(w.fr); usedZh.add(w.zh); ws.push(w);
+    if(ws.length === 5) break;
+  }
+  if(ws.length < 2) return stage("词不够，换个等级试试。");
+  const L = ws.map(w => ({id:key(w), txt:w.fr, w}));
+  const R = shuffle(ws.map(w => ({id:key(w), txt:w.zh})));
+  let sel = null, done = 0;
+  stage(`<div class="hint">把法语和中文配对（先点左边，再点右边）</div>
+    <div class="matchwrap"><div class="opts" id="L"></div><div class="opts" id="R"></div></div>`);
+  const card = $("stage").firstElementChild;
+  const build = (arr, host, side) => arr.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = o.txt; b.style.fontSize = "15px";
+    b.dataset.id = o.id;
+    b.onclick = () => {
+      if(side === "L"){
+        $("L").querySelectorAll("button").forEach(x => x.style.borderColor = "");
+        sel = {o,b}; b.style.borderColor = "var(--hot)"; return;
+      }
+      if(!sel) return;
+      if(sel.o.id === o.id){
+        sel.b.classList.add("ok"); b.classList.add("ok");
+        sel.b.disabled = b.disabled = true; sel.b.style.borderColor = "";
+        grade(sel.o.w, true); done++;
+        if(done === ws.length) fb(card, true, `<div class="sent">🎉 这一组全部配对完成</div>` +
+          `<div class="sub" style="margin-top:10px">挨个听一遍：</div>` +
+          `<div class="row">${ws.map(x => sayBtn(bare(x.fr), bare(x.fr))).join("")}</div>`);
+      } else {
+        b.classList.add("bad"); grade(sel.o.w, false);
+        setTimeout(() => b.classList.remove("bad"), 600);
+        sel.b.style.borderColor = "";
+      }
+      sel = null;
+    };
+    $(host).appendChild(b);
+  });
+  build(L,"L","L"); build(R,"R","R");
+}
+
+/* ───────── 真实新闻 ───────── */
+function drawNews(){
+  const items = NEWS.filter(n => !(n.who||[]).some(isBlockedName));
+  if(!items.length){ $("stage").innerHTML = '<div class="card">按当前屏蔽设置，没有可显示的新闻。</div>'; return; }
+  $("stage").innerHTML = items.map(n => `
+    <div class="news">
+      <div class="pills"><span class="pill">${esc(n.topic)}</span></div>
+      <div class="q">${hi(n.q, (n.who||[]))}</div>
+      <div class="zh">${esc(n.zh)}</div>
+      <div class="meta"><span>来源：${esc(n.src)}</span>
+        <a href="${esc(n.url)}" target="_blank" rel="noopener">读原文 ↗</a>
+        <span id="sp${items.indexOf(n)}" style="cursor:pointer;color:var(--hot)">🔊 朗读</span></div>
+    </div>`).join("") +
+    `<p class="sub">这些是法语媒体的原句，每条只摘一句并链接回原文。它们不会自动更新，需要我定期帮你换新。</p>`;
+  items.forEach((n,i) => { const el = $("sp"+i); if(el) el.onclick = () => speak(n.q); });
+}
+
+/* ───────── 界面 ───────── */
+function drawTabs(){
+  $("tabs").innerHTML =
+    `<button data-t="practice" class="${tab==="practice"?"on":""}">练习</button>` +
+    `<button data-t="news" class="${tab==="news"?"on":""}">真实新闻</button>`;
+  $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => {
+    tab = b.dataset.t; drawTabs();
+    $("qtype").style.display = tab === "practice" ? "" : "none";
+    $("bar").style.display   = tab === "practice" ? "" : "none";
+    tab === "practice" ? next() : drawNews();
+  });
+}
+function drawSelects(){
+  const lvls = ["all","A1","A2","B1","B2","C1"];
+  const cl = LS.get("g_lvl","all");
+  $("lvl").innerHTML = lvls.map(l => `<option value="${l}" ${l===cl?"selected":""}>${l==="all"?"全部等级":l}</option>`).join("");
+  $("qtype").innerHTML = `<option value="mix" ${qmode==="mix"?"selected":""}>混合练习</option>` +
+    Object.keys(Q).map(k => `<option value="${k}" ${qmode===k?"selected":""}>只练 ${Q[k].zh}</option>`).join("");
+}
+function drawBar(){
+  const ks = Object.keys(prog);
+  const mastered = ks.filter(k => prog[k].box >= 5).length;
+  const learning = ks.filter(k => prog[k].box >= 1 && prog[k].box < 5).length;
+  const tot = session.right + session.wrong;
+  const acc = tot ? Math.round(session.right / tot * 100) : null;
+  $("bar").innerHTML = `题库 <b>${pool().length}</b> 词 · 学习中 <b>${learning}</b> · 熟练 <b>${mastered}</b>` +
+    (acc !== null ? ` · 本次正确率 <b>${acc}%</b>（${session.right}/${tot}）` : "");
+}
+function drawBlock(){
+  $("chips").innerHTML = DRIVERS.map(d => {
+    const off = isBlockedName(d[0]);
+    return `<button class="chip ${off?"off":""}" data-n="${esc(d[0])}">${esc(d[0])} <span style="color:var(--t3)">${esc(d[1])}</span></button>`;
+  }).join("");
+  $("chips").querySelectorAll(".chip").forEach(c => c.onclick = () => {
+    const n = c.dataset.n;
+    const i = blocked.findIndex(b => n.toLowerCase().includes(b.trim().toLowerCase()));
+    if(i >= 0) blocked.splice(i,1); else blocked.push(n);
+    saveAll(); drawBlock(); drawBar(); tab==="practice" ? next() : drawNews();
+  });
+  $("blist").innerHTML = blocked.length
+    ? "当前屏蔽：" + blocked.map((b,i) => `<span class="tag">${esc(b)} <a href="#" data-i="${i}">✕</a></span>`).join("")
+    : '<span class="sub">当前没有屏蔽任何人。</span>';
+  $("blist").querySelectorAll("a").forEach(a => a.onclick = e => {
+    e.preventDefault(); blocked.splice(+a.dataset.i,1);
+    saveAll(); drawBlock(); drawBar(); tab==="practice" ? next() : drawNews();
+  });
+}
+
+$("lvl").onchange   = () => { LS.set("g_lvl", $("lvl").value); drawBar(); if(tab==="practice") next(); };
+$("qtype").onchange = () => { qmode = $("qtype").value; LS.set("g_qmode", qmode); lastQ = null; next(); };
+$("addblock").onclick = () => {
+  const v = $("newblock").value.trim();
+  if(v){ blocked.push(v); $("newblock").value = ""; saveAll(); drawBlock(); drawBar(); tab==="practice"?next():drawNews(); }
+};
+$("newblock").onkeydown = e => { if(e.key === "Enter") $("addblock").click(); };
+$("reset").onclick = () => {
+  if(confirm("清空所有学习进度？")){ prog = {}; session = {right:0,wrong:0}; saveAll(); drawBar(); next(); }
+};
+
+/* ───────── 进度导出 / 导入 ───────── */
+// 只导出真正练过的词，码会短很多
+const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+const b64dec = s => decodeURIComponent(escape(atob(s)));
+function exportCode(){
+  const rows = Object.entries(prog)
+    .filter(([,v]) => v.box > 0 || v.err > 0)
+    .map(([k,v]) => [k, v.box|0, Math.round((v.due||0)/60000), v.seen|0, v.err|0]);
+  return b64enc(JSON.stringify({v:1, t:Date.now(), b:blocked, r:rows}));
+}
+function importCode(code){
+  const d = JSON.parse(b64dec(code.trim()));
+  if(!d || d.v !== 1 || !Array.isArray(d.r)) throw new Error("格式不对");
+  const known = new Set(WORDS.map(w => w.id));
+  let ok = 0, skipped = 0;
+  const next = {};
+  for(const [k, box, dueMin, seen, err] of d.r){
+    if(!known.has(k)){ skipped++; continue; }   // 词表更新后旧码里可能有已删除的词
+    next[k] = {box:box|0, due:(dueMin|0)*60000, seen:seen|0, err:err|0};
+    ok++;
+  }
+  prog = next;
+  if(Array.isArray(d.b)) blocked = d.b;
+  saveAll();
+  return {ok, skipped, when: d.t ? new Date(d.t).toLocaleString() : "未知时间"};
+}
+$("doexport").onclick = () => {
+  const n = Object.values(prog).filter(v => v.box > 0 || v.err > 0).length;
+  $("synccode").value = exportCode();
+  $("syncmsg").textContent = n ? `已导出 ${n} 个练过的词。复制这串码存到备忘录里。`
+                               : "目前还没有练过的词，导出的是一串空进度。";
+};
+$("docopy").onclick = async () => {
+  const v = $("synccode").value.trim();
+  if(!v){ $("syncmsg").textContent = "先点「导出」生成一串码。"; return; }
+  try{ await navigator.clipboard.writeText(v); $("syncmsg").textContent = "已复制到剪贴板。"; }
+  catch(e){ $("synccode").select(); $("syncmsg").textContent = "自动复制不可用，已选中，请手动复制。"; }
+};
+$("doimport").onclick = () => {
+  const v = $("synccode").value.trim();
+  if(!v){ $("syncmsg").textContent = "把之前存的码粘贴到框里再点导入。"; return; }
+  if(!confirm("导入会覆盖这台设备上现在的进度，确定吗？")) return;
+  try{
+    const r = importCode(v);
+    $("syncmsg").textContent = `导入成功：恢复 ${r.ok} 个词` +
+      (r.skipped ? `，跳过 ${r.skipped} 个（词表更新后已不存在）` : "") + `。备份时间 ${r.when}。`;
+    drawBlock(); drawBar(); tab === "practice" ? next() : drawNews();
+  }catch(e){
+    $("syncmsg").textContent = "导入失败：这串码看起来不完整或不是本应用导出的。";
+  }
+};
+document.addEventListener("keydown", e => { if(e.key === "Enter" && $("nx")) $("nx").click(); });
+
+function drawAutoSay(){
+  $("autosay").textContent = autoSay ? "🔊 自动发音 开" : "🔇 自动发音 关";
+  $("autosay").style.borderColor = autoSay ? "var(--hot)" : "var(--line)";
+}
+$("autosay").onclick = () => {
+  autoSay = !autoSay; LS.set("g_autosay", autoSay); drawAutoSay();
+  // 手机上第一次必须由点击触发，否则后面都不会响
+  if(autoSay && !speak("bonjour")) $("autosay").textContent = "🔇 此环境无语音";
+};
+drawAutoSay();
+drawSelects(); drawTabs(); drawBlock(); drawBar(); next();
+</script>
+</body>
+</html>

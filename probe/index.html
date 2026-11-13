@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>存储测试</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:18px 16px 40px;background:#0e1014;color:#eceef2;
+     font:16px/1.6 system-ui,-apple-system,"PingFang SC",sans-serif}
+h1{font-size:19px;margin:0 0 4px}
+.sub{color:#8b94a3;font-size:13px;margin-bottom:18px}
+.big{font-size:32px;font-weight:800;line-height:1.25;margin:6px 0}
+.card{background:#171a20;border:1px solid #272b34;border-radius:14px;padding:18px 16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #22262e;font-size:14px}
+.row:last-child{border-bottom:none}
+.row span:first-child{color:#8b94a3}
+.ok{color:#2fbf71;font-weight:700}
+.bad{color:#e5484d;font-weight:700}
+.warn{color:#f2b63d;font-weight:700}
+code{background:#0b0c0e;padding:2px 6px;border-radius:5px;font-size:12px}
+button{background:#171a20;color:#eceef2;border:1.5px solid #272b34;border-radius:11px;
+       padding:11px 16px;font-size:15px;cursor:pointer;margin-right:8px;margin-top:4px}
+.hint{color:#5d6673;font-size:12px;line-height:1.7;margin-top:16px}
+</style>
+</head>
+<body>
+
+<h1>存储测试</h1>
+<div class="sub">用来确认这个环境里的数据能活多久。隔几小时、隔一天、隔一周各打开一次。</div>
+
+<div class="card">
+  <div class="sub" style="margin:0">这是第</div>
+  <div class="big" id="count">—</div>
+  <div class="sub" style="margin:0">次打开</div>
+</div>
+
+<div class="card">
+  <div class="row"><span>首次打开</span><b id="first">—</b></div>
+  <div class="row"><span>上次打开</span><b id="last">—</b></div>
+  <div class="row"><span>距上次</span><b id="gap">—</b></div>
+  <div class="row"><span>数据已存活</span><b id="age">—</b></div>
+</div>
+
+<div class="card">
+  <div class="sub" style="margin:0 0 6px">三种存储方式分别测</div>
+  <div class="row"><span>localStorage</span><b id="s_ls">—</b></div>
+  <div class="row"><span>IndexedDB</span><b id="s_idb">—</b></div>
+  <div class="row"><span>Cookie</span><b id="s_ck">—</b></div>
+  <div class="sub" style="margin-top:10px">哪一种还留着，哪一种就能用来存进度。</div>
+</div>
+
+<div class="card">
+  <div class="sub" style="margin:0 0 8px">环境</div>
+  <div class="row"><span>运行在</span><b id="env">—</b></div>
+  <div class="row"><span>页面地址</span><b id="org" style="font-size:12px;word-break:break-all">—</b></div>
+</div>
+
+<button id="reset">清零重新开始</button>
+<button id="copy">复制记录</button>
+<div class="sub" id="msg" style="margin-top:10px"></div>
+
+<div class="hint">
+  怎么看结果：<br>
+  · 次数一直累加 → 数据能留住，可以把进度存在本地。<br>
+  · 次数回到 1，或某一项变成「已丢失」→ 那种方式在这个环境里不可靠。<br>
+  · 隔一周还在，才算真的可靠。<br><br>
+  这个页面不联网，不收集任何信息，所有记录只存在这台设备上。
+</div>
+
+<script>
+const K = "probe_v1";
+const now = Date.now();
+const fmt = t => new Date(t).toLocaleString();
+const dur = ms => {
+  if(ms < 0) ms = 0;
+  const m = Math.floor(ms/60000), h = Math.floor(m/60), d = Math.floor(h/24);
+  if(d) return d + " 天 " + (h%24) + " 小时";
+  if(h) return h + " 小时 " + (m%60) + " 分";
+  if(m) return m + " 分钟";
+  return "刚刚";
+};
+const $ = id => document.getElementById(id);
+
+/* localStorage */
+let rec = null, lsOK = false;
+try{
+  const raw = localStorage.getItem(K);
+  if(raw) rec = JSON.parse(raw);
+  lsOK = true;
+}catch(e){ lsOK = false; }
+
+const isNew = !rec;
+if(!rec) rec = {first: now, opens: 0, last: now};
+const prevLast = rec.last;
+rec.opens++;
+rec.last = now;
+try{ localStorage.setItem(K, JSON.stringify(rec)); }catch(e){ lsOK = false; }
+
+$("count").textContent = rec.opens;
+$("first").textContent = fmt(rec.first);
+$("last").textContent  = rec.opens === 1 ? "这是第一次" : fmt(prevLast);
+$("gap").textContent   = rec.opens === 1 ? "—" : dur(now - prevLast);
+$("age").textContent   = rec.opens === 1 ? "—" : dur(now - rec.first);
+
+$("s_ls").innerHTML = !lsOK ? '<span class="bad">不可用</span>'
+  : isNew ? '<span class="warn">刚写入，待验证</span>'
+          : '<span class="ok">还在（' + rec.opens + ' 次）</span>';
+
+/* Cookie */
+let ckOK = false, ckHad = false;
+try{
+  ckHad = document.cookie.includes(K + "=");
+  const exp = new Date(now + 400*864e5).toUTCString();
+  document.cookie = K + "=1; expires=" + exp + "; path=/; SameSite=Lax";
+  ckOK = document.cookie.includes(K + "=");
+}catch(e){}
+$("s_ck").innerHTML = !ckOK ? '<span class="bad">不可用</span>'
+  : ckHad ? '<span class="ok">还在</span>'
+          : '<span class="warn">刚写入，待验证</span>';
+
+/* IndexedDB */
+(function(){
+  if(!window.indexedDB){ $("s_idb").innerHTML = '<span class="bad">不可用</span>'; return; }
+  let req;
+  try{ req = indexedDB.open(K, 1); }
+  catch(e){ $("s_idb").innerHTML = '<span class="bad">不可用</span>'; return; }
+  req.onupgradeneeded = e => e.target.result.createObjectStore("kv");
+  req.onerror = () => { $("s_idb").innerHTML = '<span class="bad">不可用</span>'; };
+  req.onsuccess = e => {
+    const db = e.target.result;
+    try{
+      const tx = db.transaction("kv", "readwrite");
+      const st = tx.objectStore("kv");
+      const g = st.get("opens");
+      g.onsuccess = () => {
+        const had = typeof g.result === "number";
+        const n = (had ? g.result : 0) + 1;
+        st.put(n, "opens");
+        $("s_idb").innerHTML = had ? '<span class="ok">还在（' + n + ' 次）</span>'
+                                   : '<span class="warn">刚写入，待验证</span>';
+      };
+      g.onerror = () => { $("s_idb").innerHTML = '<span class="bad">读取失败</span>'; };
+    }catch(err){ $("s_idb").innerHTML = '<span class="bad">不可用</span>'; }
+  };
+})();
+
+/* 环境 */
+const ua = navigator.userAgent;
+let env = "普通浏览器";
+if(/XHS|xhsapp|discover/i.test(ua)) env = "小红书内置浏览器";
+else if(/MicroMessenger/i.test(ua)) env = "微信内置浏览器";
+else if(/\bwv\b|; wv\)/.test(ua)) env = "App 内嵌 webview";
+$("env").textContent = env;
+$("org").textContent = location.origin === "null" ? "本地文件（file://）" : location.origin;
+
+$("reset").onclick = () => {
+  if(!confirm("清零后计数从头开始，确定吗？")) return;
+  try{ localStorage.removeItem(K); }catch(e){}
+  try{ document.cookie = K + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"; }catch(e){}
+  try{ indexedDB.deleteDatabase(K); }catch(e){}
+  location.reload();
+};
+$("copy").onclick = async () => {
+  const txt = [
+    "打开次数 " + rec.opens,
+    "首次 " + fmt(rec.first),
+    "本次 " + fmt(now),
+    "已存活 " + dur(now - rec.first),
+    "localStorage " + $("s_ls").innerText,
+    "IndexedDB " + $("s_idb").innerText,
+    "Cookie " + $("s_ck").innerText,
+    "环境 " + env,
+  ].join("\n");
+  try{ await navigator.clipboard.writeText(txt); $("msg").textContent = "已复制，可以直接发给我。"; }
+  catch(e){ $("msg").textContent = txt; }
+};
+</script>
+</body>
+</html>
